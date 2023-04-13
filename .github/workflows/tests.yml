@@ -1,0 +1,44 @@
+#--------------------------------------------------------------------------------------
+# This GitHub Actions workflow can be run locally using https://github.com/nektos/act
+#
+# act normally uses docker, but it can also be run using podman on Fedora 37:
+# dnf install act-cli podman-docker
+# podman system service -t 0 &
+# act --bind --container-daemon-socket $XDG_RUNTIME_DIR/podman/podman.sock -W .github/workflows/main.yml
+#--------------------------------------------------------------------------------------
+name: Tests
+
+on:
+  pull_request:
+
+env:
+  PYTHONWARNINGS: "ignore:DEPRECATION"
+  DEBIAN_FRONTEND: noninteractive
+
+jobs:
+  python-checks:
+    name: Python sanity checks and regression tests
+
+    runs-on: ubuntu-20.04  # 20.04 is required for availability of python-2.7
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["2.7"]  # Newer versions will be added during python2to3 work
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        id: cpython
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - run: |
+          set -x
+          sudo -E apt-get update  -qq  # For xmllint to validate inventory.xml:
+          sudo -E apt-get install -qq -o Dpkg::Use-Pty=0 libxml2-utils
+          ${{ steps.cpython.outputs.python-path }} -m pip install -r requirements.txt
+
+      - name: Test sar file collection, extended by XSI-1385 with plain-text SARs
+        run: |
+          export PYTHON=${{ steps.cpython.outputs.python-path }}
+          sudo -E TRACE=logging tests/integration/sar-file-collection.test.sh
+          uptime
