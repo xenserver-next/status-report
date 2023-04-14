@@ -1,5 +1,20 @@
-name: deploy
+#--------------------------------------------------------------------------------------
+# This is a composite action which is used by the dom0 testing workflow for each
+# invocation of xen-bugtool on the runner.
+# Composite actions are also called templates:
+# https://blog.devgenius.io/github-actions-how-to-create-templates-d0974a02d087
+# Examples of composite actions:
+# https://dev.to/robmulpeter/getting-started-with-github-action-workflows-3ehn
+# composite actions can now also use "uses:" to use other composite actions,
+# so it would be possible to create local "libraries" as frontends for other templates:
+# https://github.com/orgs/community/discussions/25778
+#--------------------------------------------------------------------------------------
+
+name: Composite action to run xen-bugtool --entries=${{ inputs.entry }}
 description: Run xen-bugtool --entries=<the given entry> in Dom0
+
+# This example shows how to use inputs and outputs with composite actions:
+# https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
 
 # The inputs that this action accepts
 inputs:
@@ -14,6 +29,8 @@ outputs:
     value: ${{ steps.test-run.outputs.dir }}
 
 runs:
+  # Docs:
+  # https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
   using: "composite"
   steps:
   - name: Run xen-bugtool --entries=${{ inputs.entry }} in Dom0

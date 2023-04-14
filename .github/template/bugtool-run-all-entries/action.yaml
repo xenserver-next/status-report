@@ -1,0 +1,273 @@
+#--------------------------------------------------------------------------------------
+# This is a composite action which is used by the dom0 testing workflow for each
+# invocation of xen-bugtool on the runner.
+# Composite actions are also called templates:
+# https://blog.devgenius.io/github-actions-how-to-create-templates-d0974a02d087
+# Examples of composite actions:
+# https://dev.to/robmulpeter/getting-started-with-github-action-workflows-3ehn
+# composite actions can now also use "uses:" to use other composite actions,
+# so it would be possible to create local "libraries" as frontends for other templates:
+# https://github.com/orgs/community/discussions/25778
+#--------------------------------------------------------------------------------------
+
+name: Composite action to run all xen-bugtool --entries=$
+description: Run xen-bugtool for all supported entries in Dom0
+
+runs:
+  # Docs:
+  # https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
+  using: "composite"
+  steps:
+
+    - name: "Run xen-bugtool: persistent-stats"
+      uses: "./.github/template/bugtool-run-entry"
+      id: test-persistent-stats
+      with:
+        entry: persistent-stats
+
+    - name: "Check xen-bugtool: persistent-stats"
+      shell: bash
+      run: |
+        cd ${{ steps.test-persistent-stats.outputs.dir }}
+        dom0label="Control domain on host: $HOSTNAME"
+        uuid=`xe vm-list params=uuid name-label="$dom0label" --minimal`
+        file xapi_rrd-$uuid.out | grep "XML 1.0 document"
+        file xapi_rrd-host.out  | grep "XML 1.0 document"
+        # TODO: Maybe generate an XML Schema or use xq:
+        # pip install xq: https://github.com/jeffbr13/xq
+        xmllint xapi_rrd-$uuid.out >/dev/null
+        xmllint xapi_rrd-host.out  >/dev/null
+
+    - name: "Run xen-bugtool: yum"
+      uses: "./.github/template/bugtool-run-entry"
+      id: yum
+      with:
+        entry: yum
+    - name: "Run xen-bugtool: xspvscache"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xspvscache
+      with:
+        entry: xspvscache
+    - name: "Run xen-bugtool: xha-liveset"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xha-liveset
+      with:
+        entry: xha-liveset
+    - name: "Run xen-bugtool: xenserver-logs"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xenserver-logs
+      with:
+        entry: xenserver-logs
+    - name: "Run xen-bugtool: xenserver-install"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xenserver-install
+      with:
+        entry: xenserver-install
+    - name: "Run xen-bugtool: xenserver-domains"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xenserver-domains
+      with:
+        entry: xenserver-domains
+    - name: "Run xen-bugtool: xenserver-databases"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xenserver-databases
+      with:
+        entry: xenserver-databases
+    - name: "Run xen-bugtool: xenserver-config"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xenserver-config
+      with:
+        entry: xenserver-config
+    - name: "Run xen-bugtool: xenopsd"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xenopsd
+      with:
+        entry: xenopsd
+
+    - name: "Run xen-bugtool: xen-info"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xen-info
+      with:
+        entry: xen-info
+
+    - name: "Check xen-bugtool: xen-info"
+      shell: bash
+      run: |
+        cd ${{ steps.xen-info.outputs.dir }}
+        test -s xen-cpuid-v.out
+        test -s xen-livepatch-list.out
+        test -s xen-ucode-show-cpu-info.out
+        test -s xl-dmesg.out
+        test -s xl-info-n.out
+        test -s xl-info.out
+
+    - name: "Run xen-bugtool: xcp-rrdd-plugins"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xcp-rrdd-plugins
+      with:
+        entry: xcp-rrdd-plugins
+    - name: "Run xen-bugtool: xapi-subprocess"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xapi-subprocess
+      with:
+        entry: xapi-subprocess
+    - name: "Run xen-bugtool: xapi-debug"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xapi-debug
+      with:
+        entry: xapi-debug
+    - name: "Run xen-bugtool: xapi-clusterd"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xapi-clusterd
+      with:
+        entry: xapi-clusterd
+    - name: "Run xen-bugtool: xapi"
+      uses: "./.github/template/bugtool-run-entry"
+      id: xapi
+      with:
+        entry: xapi
+    - name: "Run xen-bugtool: vtpm"
+      uses: "./.github/template/bugtool-run-entry"
+      id: vtpm
+      with:
+        entry: vtpm
+    - name: "Run xen-bugtool: VM-snapshot-schedule"
+      uses: "./.github/template/bugtool-run-entry"
+      id: VM-snapshot-schedule
+      with:
+        entry: VM-snapshot-schedule
+    - name: "Run xen-bugtool: v6d"
+      uses: "./.github/template/bugtool-run-entry"
+      id: v6d
+      with:
+        entry: v6d
+    - name: "Run xen-bugtool: tapdisk-logs"
+      uses: "./.github/template/bugtool-run-entry"
+      id: tapdisk-logs
+      with:
+        entry: tapdisk-logs
+    - name: "Run xen-bugtool: system-services"
+      uses: "./.github/template/bugtool-run-entry"
+      id: system-services
+      with:
+        entry: system-services
+    - name: "Run xen-bugtool: system-logs"
+      uses: "./.github/template/bugtool-run-entry"
+      id: system-logs
+      with:
+        entry: system-logs
+    - name: "Run xen-bugtool: process-list"
+      uses: "./.github/template/bugtool-run-entry"
+      id: process-list
+      with:
+        entry: process-list
+    - name: "Run xen-bugtool: pam"
+      uses: "./.github/template/bugtool-run-entry"
+      id: pam
+      with:
+        entry: pam
+    - name: "Run xen-bugtool: network-status"
+      uses: "./.github/template/bugtool-run-entry"
+      id: network-status
+      with:
+        entry: network-status
+    - name: "Run xen-bugtool: network-config"
+      uses: "./.github/template/bugtool-run-entry"
+      id: network-config
+      with:
+        entry: network-config
+    - name: "Run xen-bugtool: multipath"
+      uses: "./.github/template/bugtool-run-entry"
+      id: multipath
+      with:
+        entry: multipath
+    - name: "Run xen-bugtool: message-switch"
+      uses: "./.github/template/bugtool-run-entry"
+      id: message-switch
+      with:
+        entry: message-switch
+    - name: "Run xen-bugtool: loopback-devices"
+      uses: "./.github/template/bugtool-run-entry"
+      id: loopback-devices
+      with:
+        entry: loopback-devices
+    - name: "Run xen-bugtool: kernel-info"
+      uses: "./.github/template/bugtool-run-entry"
+      id: kernel-info
+      with:
+        entry: kernel-info
+    - name: "Run xen-bugtool: host-crashdump-logs"
+      uses: "./.github/template/bugtool-run-entry"
+      id: host-crashdump-logs
+      with:
+        entry: host-crashdump-logs
+    - name: "Run xen-bugtool: high-availability"
+      uses: "./.github/template/bugtool-run-entry"
+      id: high-availability
+      with:
+        entry: high-availability
+    - name: "Run xen-bugtool: hardware-info"
+      uses: "./.github/template/bugtool-run-entry"
+      id: hardware-info
+      with:
+        entry: hardware-info
+    - name: "Run xen-bugtool: firstboot"
+      uses: "./.github/template/bugtool-run-entry"
+      id: firstboot
+      with:
+        entry: firstboot
+    - name: "Run xen-bugtool: fcoe"
+      uses: "./.github/template/bugtool-run-entry"
+      id: fcoe
+      with:
+        entry: fcoe
+    - name: "Run xen-bugtool: disk-info"
+      uses: "./.github/template/bugtool-run-entry"
+      id: disk-info
+      with:
+        entry: disk-info
+    - name: "Check xen-bugtool: disk-info"
+      run: |
+        cd ${{ steps.disk-info.outputs.dir }}
+        test -s df-alTi.out
+        test -s df-alT.out
+        test -s du-ax-%.out
+        test -s fdisk-l.out
+        test -s hdparm-I-%dev%sda.out
+        test -s ls-R-%sys%class%fc_transport.out
+        test -s ls-R-%sys%class%scsi_disk.out
+        test -s ls-R-%sys%class%scsi_host.out
+        test -s lvdisplay--map.out
+        test -s lvs.out
+        cat mdadm--detail-platform.out  # These can be empty
+        cat mdadm--detail--scan.out
+        test -s pvs.out
+        test -s scsi-hosts.out
+        test -s sg_map-x.out
+        test -s vgscan.out
+        grep VG_XenStorage vgs.out
+    - name: "Run xen-bugtool: device-model"
+      uses: "./.github/template/bugtool-run-entry"
+      id: device-model
+      with:
+        entry: device-model
+    - name: "Run xen-bugtool: CVSM"
+      uses: "./.github/template/bugtool-run-entry"
+      id: CVSM
+      with:
+        entry: CVSM
+    - name: "Run xen-bugtool: control-slice"
+      uses: "./.github/template/bugtool-run-entry"
+      id: control-slice
+      with:
+        entry: control-slice
+    - name: "Run xen-bugtool: boot-loader"
+      uses: "./.github/template/bugtool-run-entry"
+      id: boot-loader
+      with:
+        entry: boot-loader
+    - name: "Run xen-bugtool: blobs"
+      uses: "./.github/template/bugtool-run-entry"
+      id: blobs
+      with:
+        entry: blobs
