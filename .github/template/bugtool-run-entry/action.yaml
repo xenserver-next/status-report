@@ -1,0 +1,23 @@
+name: deploy
+description: Run xen-bugtool --entries=<the given entry> in Dom0
+
+# Were we can define the inputs that our action will accept
+inputs:
+  entry:
+    description: The entry to pass to xen-bugtool --entries=
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+  - name: Run xen-bugtool --entries=${{ inputs.entry }} in Dom0
+    shell: bash
+    run: |
+      rm -rf   .tmp/${{ inputs.entry }}
+      mkdir -p .tmp/${{ inputs.entry }}
+      pushd    .tmp/${{ inputs.entry }}
+      set -xv
+      sudo python2 ../../xen-bugtool -ys --entries=${{ inputs.entry }} --output=tar --outfd=1 >bugtool.tar
+      tar xvf bugtool.tar --strip-components=1
+      find * -type f -print0 | xargs -0 ls
+      popd

@@ -1,22 +1,32 @@
 #--------------------------------------------------------------------------------------
 # This GitHub Actions workflow tests xen-bugtool in a Dom0-based self-hosted runner.
 # Runs the checks when an authorized user comments the PR with: /run checks in dom0
+#
+# Pre-condition: A self-hosted github-runner, installed on a XenServer Dom0 needs to
+# be registered for this repository and running. Instructions are found here:
+# https://github.com/xenserver-next/status-report/settings/actions/runners/new
+# Required additional software in Dom0: git and maybe other tools
 #--------------------------------------------------------------------------------------
-name: Run automated tests in Dom0
+# Based on:
+# https://dev.to/zirkelc/trigger-github-workflow-for-comment-on-pull-request-45l2
+# https://github.com/zirkelc/github-actions-workflows/blob/main/.github/workflows/deploy-on-comment.yml
+#--------------------------------------------------------------------------------------
+
+name: Run checks on xen-bugtool in Dom0
 on:
   issue_comment:
     types: [created, edited]
 
+# Docs: https://github.com/marketplace/actions/commit-status-updater#workflow-permissions
+# and more info on https://github.com/actions/first-interaction/issues/10
 permissions:
-  # id-token: write # This is required for requesting the JWT
-  contents: read # This is required for actions/checkout
-  statuses: write
-  # issues: write
-  pull-requests: write # For reporting the test results as a comment to the PR
+  pull-requests: write  # self-hosted runners need explicit write permission to create a comment
+  statuses: write  #  self-hosted runners need explicit write permission to update commit status
 
 jobs:
   pr_commented:
     name: Run checks when bernhardkaindl comments PR with "/run checks in dom0".
+    # Restricted to Bernhard and Ross because this step runs the branch on a self-hosted runner:
     if: |
       ${{ contains(fromJson('["bernhardkaindl", "rosslagerwall"]'), github.actor) &&
           contains(github.event.comment.body, '/run checks in dom0') &&
@@ -25,78 +35,66 @@ jobs:
     steps:
       # Comment-triggered actions run on the default branch. Get the PR comment branch:
       # https://dev.to/zirkelc/trigger-github-workflow-for-comment-on-pull-request-45l2
-      - name: Get PR branch
+      - name: Get the PR's branch and provide the head_sha and head_ref to other steps
         uses: xt0rted/pull-request-comment-branch@v1
-        id: comment-branch
+        if: github.event_name == 'issue_comment'
+        id: comment-branch  # This makes this step set steps.comment-branch.outputs.head_*
 
       # This updates the status display and shows that this workflow is running now:
       - name: Set latest commit status as pending
+        # Docs and example: https://github.com/myrotvorets/set-commit-status-action
         uses: myrotvorets/set-commit-status-action@master
         with:
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          sha: ${{ steps.comment-branch.outputs.head_sha }}  # Is set by the id: comment-branch step
           token: ${{ secrets.GITHUB_TOKEN }}
           status: pending
+          context: Run integration tests on self-hosted runner in Dom0
 
       - name: Checkout PR branch
         uses: actions/checkout@v3
         with:
-          ref: ${{ steps.comment-branch.outputs.head_ref }}
+          ref: ${{ steps.comment-branch.outputs.head_ref }}  # Is set by the id: comment-branch step
 
       - name: Run test for getting RRDs in Dom0
         run: |
           rm -rf   .tmp
           mkdir -p .tmp
-          cd       .tmp
-          set -x
-          sudo python2 ~-/xen-bugtool -ys --entries=persistent-stats --output=tar --outfd=1 >bugtool.tar
-          tar xvf bugtool.tar --strip-components=1
-          find * -type f -print0 | xargs -0 ls -l
-
-          # Check the RRD files:
-          dom0label="Control domain on host: $HOSTNAME"
-          uuid=`xe vm-list params=uuid name-label="$dom0label" --minimal`
-          file xapi_rrd-$uuid.out | grep "XML 1.0 document"
-          file xapi_rrd-host.out  | grep "XML 1.0 document"
-          xmllint xapi_rrd-$uuid.out >/dev/null
-          xmllint xapi_rrd-host.out  >/dev/null
-          popd
-
-      - name: Check if xen-bugtool -y --all succeeds in Dom0
-        run: |
-          rm -rf   .tmp
-          mkdir -p .tmp
           pushd    .tmp
-          set -x
-          python2      ~-/xen-bugtool --help
-          python2      ~-/xen-bugtool --capabilities
-          sudo python2 ~-/xen-bugtool --yestoall --silent --output=tar --outfd=1 >bugtool.tar
+          set -xv
+          sudo python2 ../xen-bugtool -ys --entries=persistent-stats --output=tar --outfd=1 >bugtool.tar
           tar xvf bugtool.tar --strip-components=1
+          find * -type f -print0 | xargs -0 ls -l
 
           # Check the RRD files:
-          find * -type f -print0 | xargs -0 ls -l
           dom0label="Control domain on host: $HOSTNAME"
           uuid=`xe vm-list params=uuid name-label="$dom0label" --minimal`
           file xapi_rrd-$uuid.out | grep "XML 1.0 document"
           file xapi_rrd-host.out  | grep "XML 1.0 document"
           xmllint xapi_rrd-$uuid.out >/dev/null
           xmllint xapi_rrd-host.out  >/dev/null
-          # TODO: Run more checks of the generated output (for python2to3 conversion)
           popd
+
+      #- name: Check if xen-bugtool -y --all succeeds in Dom0
+      - uses: "./.github/template/bugtool-run-entry"
+        with:
+          entry: xen-info
 
       # This will mark this workflow as either passed or failed:
       - name: Set latest commit status as ${{ job.status }}
+        # Docs and example: https://github.com/myrotvorets/set-commit-status-action
         uses: myrotvorets/set-commit-status-action@master
         if: always()
         with:
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
+          sha: ${{ steps.comment-branch.outputs.head_sha }}  # Is set by the id: comment-branch step
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
+          context: Run integration tests on self-hosted runner in Dom0
 
       # The comment could contain additional information from the test execution.
       # For now, it just gives feedback that the request /run dom0 tests is completed.
       - name: Add the confirmation about the test results to the commented pull request
         uses: actions/github-script@v6
-        if: always()
+        if: github.event_name == 'issue_comment'
         with:
           script: |
             const name = '${{ github.workflow   }}';
