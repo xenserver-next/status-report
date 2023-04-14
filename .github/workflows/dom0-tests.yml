@@ -6,14 +6,26 @@
 # be registered for this repository and running. Instructions are found here:
 # https://github.com/xenserver-next/status-report/settings/actions/runners/new
 # Required additional software in Dom0: git and maybe other tools
+# The github-runner needs to be installed as a regular user (create one with useradd)
+# and run: echo "$NEW_USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" | sudo tee -a /etc/sudoers
+# xen-bugtool needs to run as root, so at least it need to be runnable using sudo.
 #--------------------------------------------------------------------------------------
 # Based on:
 # https://dev.to/zirkelc/trigger-github-workflow-for-comment-on-pull-request-45l2
 # https://github.com/zirkelc/github-actions-workflows/blob/main/.github/workflows/deploy-on-comment.yml
+# Full course on GitHub Actions: https://youtu.be/TLB5MY9BBa4
 #--------------------------------------------------------------------------------------
 
 name: Run checks on xen-bugtool in Dom0
+run-name: 'Test xen-bugtool for ${{ github.event_name }} by ${{ github.actor }}'
+
+# Docs:
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issue_comment
 on:
+  pull_request:
+  # pull_request_target:
+    paths: 'README.md'
   issue_comment:
     types: [created, edited]
 
@@ -25,19 +37,39 @@ permissions:
 
 jobs:
   pr_commented:
-    name: Run checks when bernhardkaindl comments PR with "/run checks in dom0".
+    name: "Job: run xen-bugtool --entries= for each capability key"
+    strategy:
+      fail-fast: false  # Continue running other test steps if one fails
     # Restricted to Bernhard and Ross because this step runs the branch on a self-hosted runner:
+    # They can trigger this workflow but creating or editing a PR comment with '/runtest entries'
+    # Doc on contexts: https://docs.github.com/en/actions/learn-github-actions/contexts
+    # Only run this if this job is triggered on a pull request, and require
+    # that this this triggered by a issue_comment, otherwise it the source must
+    # not be another repository:
     if: |
-      ${{ contains(fromJson('["bernhardkaindl", "rosslagerwall"]'), github.actor) &&
-          contains(github.event.comment.body, '/run checks in dom0') &&
-          github.event.issue.pull_request }}
+      ${{ github.event.issue.pull_request &&
+          contains(fromJson('["bernhardkaindl", "rosslagerwall"]'), github.actor) &&
+          contains(github.event.comment.body, '/runtest entries') }}
+      ${{ github.event.issue.pull_request &&
+          github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: Dom0  # self-hosted runners with label: Dom0
     steps:
+      - name: Create an eyes-reaction to the comment to show that the comment is looked at
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const {owner, repo} = context.issue;
+            await github.rest.reactions.createForIssueComment({
+              ...context.repo,
+              comment_id: context.payload.comment.id,
+              content: "eyes",
+            });
+
       # Comment-triggered actions run on the default branch. Get the PR comment branch:
       # https://dev.to/zirkelc/trigger-github-workflow-for-comment-on-pull-request-45l2
+      # https://github.com/xt0rted/pull-request-comment-branch
       - name: Get the PR's branch and provide the head_sha and head_ref to other steps
         uses: xt0rted/pull-request-comment-branch@v1
-        if: github.event_name == 'issue_comment'
         id: comment-branch  # This makes this step set steps.comment-branch.outputs.head_*
 
       # This updates the status display and shows that this workflow is running now:
@@ -57,17 +89,19 @@ jobs:
 
       - name: "Run xen-bugtool: persistent-stats"
         uses: "./.github/template/bugtool-run-entry"
-        id: persistent-stats
+        id: test-persistent-stats
         with:
           entry: persistent-stats
 
       - name: "Check xen-bugtool: persistent-stats"
         run: |
-          cd ${{ steps.persistent-stats.outputs.dir }}
+          cd ${{ steps.test-persistent-stats.outputs.dir }}
           dom0label="Control domain on host: $HOSTNAME"
           uuid=`xe vm-list params=uuid name-label="$dom0label" --minimal`
           file xapi_rrd-$uuid.out | grep "XML 1.0 document"
           file xapi_rrd-host.out  | grep "XML 1.0 document"
+          # TODO: Maybe generate an XML Schema or use xq:
+          # pip install xq: https://github.com/jeffbr13/xq
           xmllint xapi_rrd-$uuid.out >/dev/null
           xmllint xapi_rrd-host.out  >/dev/null
 
@@ -354,11 +388,40 @@ jobs:
           status: ${{ job.status }}
           context: Run integration tests on self-hosted runner in Dom0
 
+      - name: Create a reaction to the comment
+        uses: actions/github-script@v6
+        if: ${{ github.event.issue.pull_request }}
+        with:
+          script: |
+            const emoji = `${success ? 'rocket' : '-1'}`;
+            await github.rest.reactions.createForIssueComment({
+              ...context.repo,
+              comment_id: context.payload.comment.id,
+              content: emoji,
+            });
+
+      - name: Add a label to the pull request
+        # if: github.event_name == 'issue_comment'
+        # if: ${{ github.context.issue.number > 0 }}
+        if: ${{ github.event.issue.pull_request }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const label = `${success ? 'dom0:success' : 'dom0:failure'}`;
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: [label]
+            })
+
+      # Disabled for now because job.status and the link are already in the action bar:
       # The comment could contain additional information from the test execution.
       # For now, it just gives feedback that the request /run dom0 tests is completed.
       - name: Add the confirmation about the test results to the commented pull request
         uses: actions/github-script@v6
-        if: github.event_name == 'issue_comment' && 0 == 1
+        if: ${{ github.event.issue.pull_request }}
+        # if: github.event_name == 'issue_comment' && 0 == 1
         with:
           script: |
             const name = '${{ github.workflow   }}';
@@ -371,4 +434,4 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: body
-            })
+            });
