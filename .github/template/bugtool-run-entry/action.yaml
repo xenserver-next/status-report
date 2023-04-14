@@ -1,0 +1,31 @@
+name: deploy
+description: Run xen-bugtool --entries=<the given entry> in Dom0
+
+# The inputs that this action accepts
+inputs:
+  entry:
+    description: The entry to pass to xen-bugtool --entries=
+    required: true
+
+# The outputs that this action provides
+outputs:
+  dir:
+    description: The directory where the bugtool report was extracted
+    value: ${{ steps.test-run.outputs.dir }}
+
+runs:
+  using: "composite"
+  steps:
+  - name: Run xen-bugtool --entries=${{ inputs.entry }} in Dom0
+    shell: bash
+    id: test-run
+    run: |
+      rm -rf   .tmp/${{ inputs.entry }}
+      mkdir -p .tmp/${{ inputs.entry }}
+      pushd    .tmp/${{ inputs.entry }}
+      set -xv
+      sudo python2 ../../xen-bugtool -ys --entries=${{ inputs.entry }} --output=tar --outfd=1 >bugtool.tar
+      tar xvf bugtool.tar --strip-components=1
+      find * -type f -print0 | xargs -0 ls -l
+      echo "dir=$PWD" >>$GITHUB_OUTPUT
+      popd
