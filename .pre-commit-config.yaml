@@ -1,0 +1,99 @@
+#
+# This is the configuration file of the pre-commit framework for this repository:
+# https://pypi.org/project/pre-commit
+#
+# pre-commit runs in the GitHub Workflow of this project on each push and PR.
+# Additionally, you can run it locally for faster fixing of issues using
+# $ pip3 install pre-commit -r requirements-dev.txt
+#
+# On the initial run, pre-commit downloads its checkers, subsequent runs are fast:
+#
+# $ pre-commit run    # automatically checks which checks are needed.
+# $ pre-commit run -a # runs all fixes and checks, even when not needed
+#
+# When this works, you can enable it as the pre-commit hook for this git clone:
+# $ pre-commit install
+#
+# After this, the pre-commit fixes and checks run when you commit an update.
+#
+# You can also automatically set pre-commit as pre-commit hook for new git clones:
+# $ git config --global init.templateDir ~/.git-template
+# $ pre-commit init-templatedir ~/.git-template
+#
+# Further information:
+# https://pre-commit.com/#automatically-enabling-pre-commit-on-repositories
+# All hooks: https://pre-commit.com/hooks.html
+fail_fast: true
+default_stages: [commit, push]
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    # https://github.com/pre-commit/pre-commit-hooks/blob/main/README.md:
+    hooks:
+    -   id: no-commit-to-branch
+        name: "ensure that you don't commit to the local master branch"
+        args: [--branch, master]
+        always_run: true
+    -   id: trailing-whitespace
+        name: 'check and fix files to have no trailing whitespace'
+    -   id: end-of-file-fixer
+        name: 'check and fix that files have a trailing newline'
+        exclude: tests/integration/sar-file-collection.test.sh
+    -   id: mixed-line-ending
+        args: ['--fix=lf']
+        name: 'check and fix that line endings are line feeds'
+    -   id: check-added-large-files
+        args: ['--maxkb=12']
+        name: 'check that no large files are added'
+    -   id: check-executables-have-shebangs
+    -   id: debug-statements
+        name: 'check for debugger imports and breakpoint calls'
+    -   id: check-shebang-scripts-are-executable
+    -   id: check-merge-conflict
+    -   id: check-yaml
+        name: 'check the syntax of yaml files'
+# Run "python3 -m pip install -r requirements-dev.txt" to run pytest or use "git commit --no-verify":
+-   repo: local
+    hooks:
+    -   id: pytest
+        name: check that the Xen-Bugtool Test Environment passes
+        entry: env PYTHONDEVMODE=yes python3 -m pytest
+        pass_filenames: false
+        language: system
+        types: [python]
+-   repo: https://github.com/PyCQA/autoflake
+    rev: v2.2.1
+    hooks:
+    -   id: autoflake
+        name: Run autoflake to remove unused variabled and imports
+        args: ["--in-place", "--remove-unused-variables", "--remove-all-unused-imports"]
+        language: python
+        files: \.py$
+-   repo: https://github.com/psf/black
+    rev: 23.11.0
+    hooks:
+    -   id: black
+        name: Ensure that all files (excluding xen-bugtool itself) are black-formatted
+        args: [--safe, --quiet]
+        exclude: xen-bugtool
+-   repo: https://github.com/akaihola/darker
+    rev: 1.7.2
+    hooks:
+    -   id: darker
+        name: Ensure that changes staged for updating xen-bugtool are black-formatted
+        files: xen-bugtool
+        args: [--isort, -tpy36]
+        additional_dependencies:
+          - isort
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.7.0
+    hooks:
+    -   id: mypy
+        name: Run mypy to check e.g. that all expected arguments are passed to functions etc
+        additional_dependencies: [defusedxml, pytest, types-lxml]
+-   repo: https://github.com/pycqa/pylint
+    rev: v3.0.2
+    hooks:
+    -   id: pylint
+        name: Run pylint to check that docstrings are added (and all other enabled checks)
+        log_file: ".git/pre-commit-pylint.log"

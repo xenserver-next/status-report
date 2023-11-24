@@ -105,7 +105,8 @@ max-returns=11
 
 # Maximum number of statements in function / method body.
 # defaults to: max-statements=50
-max-statements=353
+# xen-bugtool:main() is currently at 376, but it has a dedicated pylint disable comment now:
+# max-statements=376
 
 [FORMAT]
 
@@ -160,10 +161,6 @@ disable=anomalous-backslash-in-string,
         invalid-name,
         invalid-name,
         len-as-condition,
-        line-too-long,
-        missing-docstring,
-        missing-function-docstring,
-        multiple-statements,
         no-else-break,
         no-else-return,
         no-name-in-module,
@@ -185,6 +182,8 @@ disable=anomalous-backslash-in-string,
         use-set-for-membership,
         # Skip complaining about checkers only present in older pylint for Python2
         useless-option-value,
+        # Skip complaining about checkers only present in newest pylint for Python3
+        bad-option-value,
         wrong-import-order,
         # Py2 compat: Python2 requires calls to super() to have it's arguments:
         super-with-arguments,

@@ -2,7 +2,6 @@
 import ctypes
 import os
 
-from utils import run
 
 CLONE_NEWUSER = 0x10000000
 CLONE_NEWNET = 0x40000000

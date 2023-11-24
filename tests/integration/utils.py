@@ -12,7 +12,7 @@ from subprocess import PIPE, Popen
 from lxml import etree
 
 if sys.version_info.major == 2:
-    from commands import getoutput  # pyright: ignore[reportMissingImports]
+    from commands import getoutput  # type:ignore[import-not-found] # pyright: ignore[reportMissingImports]
 else:
     from subprocess import getoutput
 
@@ -27,7 +27,7 @@ def run(command):
     returncode = process.wait()
     print("# " + " ".join(command) + ":")
     if returncode:
-        raise Exception(returncode, stderr)
+        raise RuntimeError(returncode, stderr)
     print(stdout, stderr)
     return stdout, stderr
 
@@ -60,6 +60,27 @@ def verify_content_from_dom0_template(path):
         shutil.rmtree(path)
 
 
+def extract(zip_or_tar_archive, archive_type):
+    """Extract a passed zip, tar or tar.bz2 archive into the current working directory"""
+    if sys.version_info > (3, 0):
+        if archive_type == "zip" and os.environ.get("GITHUB_ACTION"):
+            run(["unzip", zip_or_tar_archive])  # GitHub's Py3 is missing cp437 for unpack_archive()
+        else:
+            shutil.unpack_archive(zip_or_tar_archive)
+    else:  # Python2.7 does not have shutil.unpack_archive():
+        if archive_type == "zip":
+            archive = zipfile.ZipFile(zip_or_tar_archive)  # type: zipfile.ZipFile|tarfile.TarFile
+        elif archive_type == "tar":
+            archive = tarfile.open(zip_or_tar_archive)
+        elif archive_type == "tar.bz2":
+            archive = tarfile.open(zip_or_tar_archive, "r:bz2")
+        else:
+            raise RuntimeError("Unsupported output archive type: %s" % archive_type)
+        archive.extractall()
+        archive.close()
+    os.unlink(zip_or_tar_archive)
+
+
 def run_bugtool_entry(archive_type, test_entries):
     """Run bugtool for the given entry or entries, extract the output, and chdir to it"""
     os.environ["XENRT_BUGTOOL_BASENAME"] = test_entries
@@ -71,17 +92,7 @@ def run_bugtool_entry(archive_type, test_entries):
     os.chdir(BUGTOOL_OUTPUT_DIR)
     output_file = test_entries + "." + archive_type
     print("# Unpacking " + BUGTOOL_OUTPUT_DIR + output_file + " and verifying inventory.xml")
-    # Python2.7 does not have shutil.unpack_archive():
-    # shutil.unpack_archive(output_file):
-    if archive_type == "zip":
-        archive = zipfile.ZipFile(output_file)
-    elif archive_type == "tar":
-        archive = tarfile.open(output_file)
-    elif archive_type == "tar.bz2":
-        archive = tarfile.open(output_file, "r:bz2")
-    else:
-        raise RuntimeError("Unsupported output archive type: %s" % archive_type)
-    archive.extractall()
+    extract(output_file, archive_type)
     os.chdir(test_entries)
     # Validate the extracted inventory.xml using the XML schema from the test framework:
     with open(srcdir + "/tests/integration/inventory.xsd") as xmlschema:

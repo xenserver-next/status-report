@@ -1,3 +1,4 @@
+"""tests/unit/test_xapidb_filter.py: Ensure that the xen-bugtool.DBFilter() filters the XAPI DB properly"""
 # This uses the deprecated imp module because it has to run with Python2.7 for now:
 import os
 import sys
@@ -54,7 +55,7 @@ expected = r"""<?xml version="1.0" ?>
 """
 
 
-@pytest.mark.skipif(sys.version_info >= (3,0), reason="requires python2")
+@pytest.mark.skipif(sys.version_info >= (3, 0), reason="requires python2")
 def test_xapi_database_filter():
     """Assert that bugtool.DBFilter().output() filters the xAPI database as expected"""
     import imp  # pylint: disable=deprecated-module  # pyright: ignore[reportMissingImports]

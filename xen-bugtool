@@ -15,7 +15,6 @@
 #
 # Copyright (c) 2005, 2007 XenSource Ltd.
 
-
 #
 # To add new entries to the bugtool, you need to:
 #
@@ -32,6 +31,13 @@
 # typically be calls to the helpers file_output(), tree_output(), cmd_output(),
 # or func_output().
 #
+
+# Special pylint disables for latest pylint on xen-bugtool itself (for the moment):
+# The old Pylint-1.9.x thinks some of these are useless:
+# pylint: disable=useless-suppression
+# pylint: disable=missing-docstring,line-too-long,multiple-statements,unnecessary-pass
+# pylint: disable=broad-exception-raised,missing-type-doc,useless-object-inheritance
+# pylint: disable=undefined-variable,unnecessary-comprehension,super-init-not-called
 
 from __future__ import print_function
 
@@ -65,7 +71,7 @@ import defusedxml.sax
 
 if sys.version_info.major == 2:
     from commands import getoutput  # pyright: ignore[reportMissingImports]
-    from urllib import urlopen
+    from urllib import urlopen  # type:ignore[attr-defined]
 else:
     from subprocess import getoutput
     from urllib.request import urlopen
@@ -614,7 +620,7 @@ Capture information to help diagnose bugs.
  -d, --debug         enable debug output
  --help              this help'''
 
-def main(argv = None):
+def main(argv = None):  # pylint: disable=too-many-statements
     global ANSWER_YES_TO_ALL, SILENT_MODE
     global entries, dbg
     global unlimited_data, unlimited_time

@@ -6,7 +6,7 @@ import os
 import pytest
 
 from namespace_container import activate_private_test_namespace, mount, umount
-from utils import BUGTOOL_DOM0_TEMPL, run
+from utils import BUGTOOL_DOM0_TEMPL, BUGTOOL_OUTPUT_DIR, run
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -25,7 +25,7 @@ def output_archive_type(request):
 
 @pytest.fixture(autouse=True, scope="function")
 def run_test_functions_with_private_tmpfs_output_directory():
-    """Run each test function with a private bugtool output directory using tmpfs"""
+    """Generator fixture to run each test function with a private bugtool output directory using tmpfs"""
     # Works in conjunction of having entered a private test namespace for the entire pytest session before:
     mount(target="/var", fs="tmpfs", options="size=128M")
     # To provide test files below /var, subdirectores can be bind-mounted/created here
@@ -33,6 +33,7 @@ def run_test_functions_with_private_tmpfs_output_directory():
     # run_bugtool_entry() will chdir to the output directory, so change back afterwards:
     srcdir = os.getcwd()
     yield
+    os.chdir(BUGTOOL_OUTPUT_DIR)
     # Assert that the test case did not leave any unchecked output fileas in the output directory:
     remaining_files = []
     for currentpath, _, files in os.walk("."):
@@ -41,8 +42,11 @@ def run_test_functions_with_private_tmpfs_output_directory():
     if remaining_files:
         print("Remaining (possibly unchecked) files found:")
         print(remaining_files)
+        os.chdir(BUGTOOL_OUTPUT_DIR)
         run(["find", "-type", "f"])
+        os.chdir(srcdir)
         print("Ensure that these files are checked, remove them when checked.")
+        umount("/var")
         raise RuntimeError("Remaining (possibly unchecked) files found. Run 'pytest -rF' for logs")
     os.chdir(srcdir)
     umount("/var")

@@ -34,3 +34,17 @@ jobs:
         run: python2 -m pylint xen-bugtool
       - name: Run python2 -m pytest to execute all unit and integration tests
         run: python2 -m pytest -v -rA
+      # https://www.python4data.science/en/latest/productive/git/advanced/hooks/ci.html
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements-dev.txt
+        name: Install the pytest dependices for running the pytest suite using Python3
+      - uses: actions/cache@v3
+        name: Setup cache for running pre-commit fast
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+      - uses: pre-commit/action@v3.0.0
+        name: Run pre-commit checks
