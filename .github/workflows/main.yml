@@ -40,7 +40,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
       - run: pip install -r requirements-dev.txt
-        name: Install the pytest dependices for running the pytest suite using Python3
+        name: Install the pytest dependencies for running the pytest suite using Python3
       - uses: actions/cache@v3
         name: Setup cache for running pre-commit fast
         with:
