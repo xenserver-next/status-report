@@ -48,3 +48,6 @@ jobs:
           key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - uses: pre-commit/action@v3.0.0
         name: Run pre-commit checks
+        env:
+          # Skip the no-commit-to-branch check inside of GitHub CI (for CI on merge to master)
+          SKIP: no-commit-to-branch

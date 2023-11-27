@@ -14,6 +14,9 @@
 # When this works, you can enable it as the pre-commit hook for this git clone:
 # $ pre-commit install
 #
+# You can skip checks if you commit very often you don't want them to run, e.g:
+# export SKIP=mypy,pylint;git commit -m "quick save" (or for --amend)
+#
 # After this, the pre-commit fixes and checks run when you commit an update.
 #
 # You can also automatically set pre-commit as pre-commit hook for new git clones:
