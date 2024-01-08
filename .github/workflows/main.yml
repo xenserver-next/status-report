@@ -69,7 +69,10 @@ jobs:
     name: "Python3: Pre-Commit Suite"
     runs-on: ubuntu-22.04
     steps:
+
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # For diff-cover to get the changed lines: origin/master..HEAD
 
       # https://www.python4data.science/en/latest/productive/git/advanced/hooks/ci.html
       - uses: actions/setup-python@v4
@@ -91,3 +94,23 @@ jobs:
         env:
           # Skip the no-commit-to-branch check inside of GitHub CI (for CI on merge to master)
           SKIP: no-commit-to-branch
+
+      - name: Pytest coverage comment
+        if: ${{ github.actor != 'nektos/act' }}
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          junitxml-path: .git/pytest.xml
+          pytest-xml-coverage-path: .git/coverage.xml
+          unique-id-for-comment: pre-commit-coverage
+          title: https://github.com/marketplace/actions/pytest-coverage-comment
+
+      - name: Upload coverage reports to Codecov
+        if: ${{ github.actor != 'nektos/act' }}
+        uses: codecov/codecov-action@v3
+        with:
+          directory: .git
+          env_vars: OS,PYTHON
+          fail_ci_if_error: true
+          flags: unittest
+          name: coverage
+          verbose: true

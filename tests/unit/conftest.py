@@ -26,7 +26,7 @@ def imported_bugtool(testdir):
     def import_from_file(module_name, file_path):
         import sys
 
-        if sys.version_info.major == 2:
+        if sys.version_info.major == 2:  # pragma: no cover
             import imp  # pylint: disable=deprecated-module  # pyright: ignore[reportMissingImports]
 
             return imp.load_source(module_name, file_path)

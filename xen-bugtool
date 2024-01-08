@@ -68,7 +68,7 @@ from xml.etree.ElementTree import Element
 
 import defusedxml.sax
 
-if sys.version_info.major == 2:
+if sys.version_info.major == 2:  # pragma: no cover
     from commands import getoutput  # pyright: ignore[reportMissingImports]
     from urllib import urlopen  # type:ignore[attr-defined]
 

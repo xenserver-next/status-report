@@ -80,5 +80,5 @@ def test_xapi_database_filter(bugtool):
 
     # Double-check with parseString(): Its output will differ between Py2/Py3
     # though, so we will use it for one language version at a time:
-    if sys.version_info < (3, 0):
+    if sys.version_info < (3, 0):  # pragma: no cover
         assert xml.dom.minidom.parseString(filtered).toprettyxml(indent="    ") == expected
