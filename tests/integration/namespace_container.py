@@ -16,7 +16,7 @@ def unshare(flags):
     libc = ctypes.CDLL(None, use_errno=True)
     libc.unshare.argtypes = [ctypes.c_int]
     rc = libc.unshare(flags)
-    if rc != 0:
+    if rc != 0:  # pragma: no cover
         errno = ctypes.get_errno()
         raise OSError(errno, os.strerror(errno), flags)
 
@@ -33,7 +33,7 @@ def mount(source="none", target="", fs="", flags=0, options=""):
     )
     print("mount -t " + fs + " -o '" + options + "' " + source + "\t" + target)
     result = libc.mount(source.encode(), target.encode(), fs.encode(), flags, options.encode())
-    if result < 0:
+    if result < 0:  # pragma: no cover
         errno = ctypes.get_errno()
         raise OSError(errno, "mount " + target + " (options=" + options + "): " + os.strerror(errno))
 
@@ -42,7 +42,7 @@ def umount(target):
     """Wrapper for the Linux umount system call, supports Python2.7 and Python3.x"""
     libc = ctypes.CDLL(None, use_errno=True)
     result = libc.umount(ctypes.c_char_p(target.encode()))
-    if result < 0:
+    if result < 0:  # pragma: no cover
         errno = ctypes.get_errno()
         raise OSError(errno, "umount " + target + ": " + os.strerror(errno))
 

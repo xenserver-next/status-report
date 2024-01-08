@@ -1,0 +1,32 @@
+[run]
+source =
+       xen-bugtool
+       tests/
+
+[report]
+# Regular expressions for lines to exclude from consideration
+exclude_lines =
+    # Don't complain if tests don't hit catch-all exception handlers:
+    except Exception
+    except IOError
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+    raise RuntimeError
+    raise ValueError
+    # \<assert\>.*
+
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    # skip any line with a `pass` (such as may be used for @abstractmethod or @suffixed_method)
+    pass
+
+precision = 1
+include =
+    xen-bugtool
+    tests/*

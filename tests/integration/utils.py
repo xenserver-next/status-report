@@ -13,7 +13,7 @@ from lxml.etree import XMLSchema, parse  # pytype: disable=import-error
 
 # pyright: ignore[reportMissingImports]
 if sys.version_info.major == 2:
-    from commands import getstatusoutput  # type:ignore[import-not-found]
+    from commands import getstatusoutput  # type:ignore[import-not-found] # pragma: no cover
 else:
     from subprocess import getstatusoutput
 
@@ -57,12 +57,12 @@ def assert_content_from_dom0_template(path, control_path=None):
     print(control)
     if os.path.isdir(path):
         result = filecmp.dircmp(path, control)
-        if result.diff_files or result.right_only:
+        if result.diff_files or result.right_only:  # pragma: no cover
             print(result.report)
             raise RuntimeError("Missing or Differing files found in " + path)
     else:
         if not filecmp.cmp(path, control):
-            os.system("cat " + path)
+            os.system("cat " + path)  # pragma: no cover
             raise RuntimeError(control)
     # Remove verified output files/directories. Untested files will remain and cause the testcase to FAIL:
     try:
@@ -71,7 +71,7 @@ def assert_content_from_dom0_template(path, control_path=None):
         shutil.rmtree(path)
 
 
-def extract(zip_or_tar_archive, archive_type):
+def extract(zip_or_tar_archive, archive_type):  # pragma: no cover
     """Extract a passed zip, tar or tar.bz2 archive into the current working directory"""
     if sys.version_info > (3, 0):
         if archive_type == "zip" and os.environ.get("GITHUB_ACTION"):

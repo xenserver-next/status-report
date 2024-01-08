@@ -36,10 +36,10 @@ def run_test_functions_with_private_tmpfs_output_directory():
     os.chdir(BUGTOOL_OUTPUT_DIR)
     # Assert that the test case did not leave any unchecked output file as in the output directory:
     remaining_files = []
-    for currentpath, _, files in os.walk("."):
+    for current_path, _, files in os.walk("."):  # pragma: no cover
         for file in files:
-            remaining_files.append(os.path.join(currentpath, file))
-    if remaining_files:
+            remaining_files.append(os.path.join(current_path, file))  # pragma: no cover
+    if remaining_files:  # pragma: no cover
         print("Remaining (possibly unchecked) files found:")
         print(remaining_files)
         os.chdir(BUGTOOL_OUTPUT_DIR)

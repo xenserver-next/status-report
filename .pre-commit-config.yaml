@@ -63,19 +63,30 @@ repos:
     hooks:
     -   id: pytest
         name: check that the Xen-Bugtool Test Environment passes
-        entry: env PYTHONDEVMODE=yes python3 -m pytest tests/unit
+        entry: env PYTHONDEVMODE=yes python3 -m pytest tests/unit --cov
+            --junitxml=.git/pytest.xml
+            --cov-report term-missing
+            --cov-report html:.git/coverage.html
+            --cov-report xml:.git/coverage.xml
         pass_filenames: false
         language: python
         types: [python]
-        additional_dependencies: [defusedxml, pytest, lxml, XenAPI]
--   repo: https://github.com/PyCQA/autoflake
-    rev: v2.2.1
+        additional_dependencies: [coverage, defusedxml, pytest-coverage, lxml, XenAPI]
+
+
+-   repo: local
     hooks:
-    -   id: autoflake
-        name: Run autoflake to automatically remove unused variables and imports
-        args: ["--in-place", "--remove-unused-variables", "--remove-all-unused-imports"]
+    -   id: diff-cover
+        name: check that that the changed lines are covered by tests
+        entry: diff-cover --ignore-whitespace --compare-branch=origin/master
+            --show-uncovered --html-report .git/coverage-diff.html
+            --fail-under 100 .git/coverage.xml
+        pass_filenames: false
         language: python
-        files: \.py$
+        types: [python]
+        additional_dependencies: [diff-cover]
+
+
 -   repo: https://github.com/psf/black
     rev: 23.11.0
     hooks:
@@ -94,20 +105,26 @@ repos:
         args: [darker-xen-bugtool]
         additional_dependencies:
           - isort
+
+
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.7.1
+    rev: v1.8.0
     hooks:
     -   id: mypy
         name: Run mypy to check e.g. that all expected arguments are passed to functions etc
         additional_dependencies: [defusedxml, pytest, types-lxml]
+
+
 -   repo: https://github.com/pycqa/pylint
-    rev: v3.0.2
+    rev: v3.0.3
     hooks:
     -   id: pylint
         name: Run pylint to check that docstrings are added (and all other enabled checks)
         log_file: ".git/pre-commit-pylint.log"
+
+
 -   repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.339
+    rev: v1.1.345
     hooks:
     -   id: pyright
         name: Run pyright to check the unit tests for any typing warnings (use for bugtool later)
@@ -120,3 +137,13 @@ repos:
         name: Run pytype to check the unit tests for any typing warnings (does not work on bugtool yet)
         exclude: xen-bugtool
         additional_dependencies: [pytest]
+
+
+-   repo: local
+    hooks:
+    -   id: git-diff # Ref: https://github.com/pre-commit/pre-commit/issues/1712
+        name: Show not staged changes (fixups may make them too)
+        entry: git diff --exit-code
+        language: system
+        pass_filenames: false
+        always_run: true
