@@ -37,13 +37,29 @@ TODO START:
 
 4.  The changes are added as additional commits and pushed.
     The individual sub-tests must be shown failing on each the cases above.
+[DONE] (done for each case)
 
 5.  The filter must be updated to handle these cases.
+[DONE] (done for each case)
 
 6.  The PR is then pushed again and then pass.
+[DONE]
 
     Changes to the test should only be needed if e.g. logging was added
     to test the logging output.
+
+Ideally, if there is capacity for it, pre-commit hooks should run on every
+commit to ensure that each works without any errors
+
+This can be done by running:
+    git rebase -x 'pre-commit run --from-ref HEAD~ --to-ref HEAD' HEAD~1
+[DONE] (for all commits in this PR)
+
+Replace the `1` with the number of commits to run the pre-commit hooks on.
+This opens an editor with the commits and checks to run on them. When it,
+by mistake contains one or more commits that are not only the ones that
+are in the current PR, remove them all commits from the editor and save
+the file. In this case `git rebase` will do nothing and no commits are changed.
 
 With all of these TODO done, step-by-step, in order, work will be complete.
 
