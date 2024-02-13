@@ -1,0 +1,3 @@
+tcp_diag 16384 0 - Live 0xffffffffc05c0000
+udp_diag 16384 0 - Live 0xffffffffc059c000
+inet_diag 24576 2 tcp_diag,udp_diag, Live 0xffffffffc0533000
