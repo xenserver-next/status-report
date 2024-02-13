@@ -6,6 +6,13 @@ import zipfile
 from lxml.etree import XMLSchema, parse  # pytype: disable=import-error
 
 
+def assert_valid_inventory_schema(inventory_tree):
+    """Assert that the passed inventory validates against the inventory schema"""
+
+    with open(os.getcwd() + "/tests/integration/inventory.xsd") as xml_schema:
+        XMLSchema(parse(xml_schema)).assertValid(inventory_tree)
+
+
 def assert_mock_bugtool_plugin_output(temporary_directory, subdir, names):
     """Assertion check of the output files from the mock bugtool plugin"""
 
