@@ -87,17 +87,10 @@ module = ["xen-bugtool"]
 disable_error_code = [
     "union-attr",
     "arg-type",
-    "attr-defined",
-    "name-defined",
+    "name-defined",  # Allow the use of unicode for Python2 support on XS8 & 8.2CU1
     "import-not-found",
     "import-untyped",
+    "method-assign",
     "operator",
     "var-annotated",
-    "assignment",
-    "misc",
-    "no-any-unimported",
-    "no-untyped-call",
-    "no-untyped-def",
-    "str-format", # Will be easy to fix
-    "unreachable"
 ]

@@ -10,8 +10,14 @@ exclude_lines =
     except:
     except Exception
     except IOError
+    except xcError
     # Have to re-enable the standard pragma
     pragma: no cover
+    # Adding type mypy ignored should be relieved from requiring coverage:
+    type: ignore\[attr-defined\]
+    type: ignore\[unreachable\]
+    # Adding type annotations should be relieved from requiring coverage:
+    type: list
 
     # Enable these selectively if you want to allow these raises without cover:
     # (If you want no complaint when tests don't hit raising these Assertions)

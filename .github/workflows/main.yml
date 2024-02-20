@@ -166,6 +166,37 @@ jobs:
           and warns about using node16, which is wrong. So we've to bear with it.
           Bug reported: https://github.com/actions/cache/issues/1323"
 
+
+      # uses: tsuyoshicho/action-mypy@v3.13.0
+      - uses: bernhardkaindl/action-mypy@36cb3a857d01c1bdaa2811893106c71580132d71
+        with:
+          filter_mode: no_filter
+          setup_method: install
+          setup_command: pip install mypy toml
+          mypy_flags: |
+            --scripts-are-modules
+            --check-untyped-defs
+            --ignore-missing-imports
+            --no-pretty
+            --warn-unreachable
+          target: |
+            xen-bugtool
+            tests
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review
+
+
+      - uses: dciborow/action-pylint@0.1.1
+        with:
+          filter_mode: no_filter
+          glob_pattern: "xen-bugtool"
+          pylint_args: |
+            --verbose
+            --rc .pylintrc
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review
+
+
       - uses: pre-commit/action@v3.0.0
         name: Run pre-commit checks
         with:
