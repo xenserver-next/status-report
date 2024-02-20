@@ -1,0 +1,16 @@
+{
+    "recommendations": [
+        "adamvoss.vscode-languagetool",
+        "adamvoss.vscode-languagetool-en",
+        "almenon.arepl",
+        "dinhani.copy-on-select",
+        "ms-python.black-formatter",
+        "ms-python.mypy-type-checker",
+        "ms-python.pylint",
+        "ms-python.python",
+        "sourcery.sourcery",
+        "streetsidesoftware.code-spell-checker",
+        "timonwong.shellcheck",
+        "valentjn.vscode-ltex",
+    ]
+}

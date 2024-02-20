@@ -82,7 +82,7 @@ def patch_bugtool(bugtool, mocker, dom0_template, report_name, tmp_path):
     :param bugtool: The imported bugtool module object to be patched.
     :param mocker: The mocker object for mocking functions and attributes.
     :param dom0_template: The path to the dom0 template directory.
-    :param report_name: The basename of the bug-report file and it's subdir.
+    :param report_name: The base name of the bug report file and its subdirectory
     :param tmp_path: The temporary path for storing files.
     """
 

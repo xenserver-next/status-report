@@ -93,7 +93,7 @@ def assert_content_from_dom0_template(path, control_path=None):
             os.system("diff -u %s %s" % (path, control))  # pragma: no cover
             raise AssertionError("/%s from report has different content" % path)
     #
-    # Remove the verified files and diretories.
+    # Remove the verified files and directories.
     #
     # The checks at the end of the tests cases expect all tested files to be removed,
     # so they will discover file which files have not been checked by the test.
@@ -130,7 +130,7 @@ def run_bugtool_entry(archive_type, test_entries):
     """
     Execute the bugtool script with the given entries and prepare testing it.
 
-    Prepare testing the output by exctracting the bugball and switch into it.
+    Prepare testing the output by extracting the bugball and switch into it.
     - Also validate the XMLSchema if the extracted inventory.xml so all tests
       have that check automatically.
     - Also create a symlink as ./tests that allows test cases to get test files.

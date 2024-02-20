@@ -91,6 +91,7 @@ else:
 #   fails with ENOSPC if the root filesystem is full
 if sys.version < "3.7":
     zipfile_del = zipfile.ZipFile.__del__  # type: ignore[attr-defined] # mypy,pyright
+
     def exceptionless_del(*argl, **kwargs):
         try:
             zipfile_del(*argl, **kwargs)
@@ -597,7 +598,7 @@ def traverse_directory_specifications(directory_specs, requested_capabilities):
     for directory, directory_items in directory_specs.items():
         # Unpack the stored capability, pattern and negate flag of each row:
         capability, pattern, negate = directory_items
-        # If the capabilty is in the requested inventory entries, check it:
+        # If the capability is in the requested inventory entries, check it:
         if capability in requested_capabilities:
             if os.path.isdir(directory):
                 lookup_tree_recursively(capability, directory, pattern, negate)
@@ -1416,7 +1417,7 @@ def dump_xapi_rrds(requested_entries):
     Query xcp-rrdd to get the RRDs for all VMs and the host or pool master.
 
     Due to triggering memory leaks, it was disabled by default (unless -a is used)
-    in 2013, it and was superceeded by collecting the compressed rrd files instead.
+    in 2013, it and was superseded by collecting the compressed rrd files instead.
     It's capability for --entries=persistent-stats is also hidden from the user.
     """
     if CAP_PERSISTENT_STATS not in requested_entries:
@@ -1531,7 +1532,7 @@ class DBFilter:
     def __init__(self, raw_xml):
         # remove values for any keys containing the word 'password'
         # example input snippet to filter:
-        #   '%.(\'incoming_chappassword\'%.\'TC12818outgoingpasswd\'))" host="Opaq'
+        #   '%.(\'incoming_chappassword\'%.\'TC12818outgoingpasswd\'))" host="host"'
         raw_xml = raw_xml if isinstance(raw_xml, str) else raw_xml.decode()
         nopass_xml = re.sub(r"\('(\w*(?:password)\w*)'%\.'\w*'\)", r"('\1'%.'REMOVED')", raw_xml)
 
@@ -2089,7 +2090,7 @@ def update_capabilities():
     max_size = caps[CAP_NETWORK_CONFIG][MAX_SIZE] * num_pifs + CAP_NETWORK_CONFIG_OVERHEAD
     update_cap_size(CAP_NETWORK_CONFIG, max_size)
 
-    # update fcoe capabilities based on number of PIFs
+    # update FCOE capabilities based on number of PIFs
     update_cap_time(CAP_FCOE, caps[CAP_FCOE][MAX_TIME] * num_pifs)
     update_cap_size(CAP_FCOE, caps[CAP_FCOE][MAX_SIZE] * num_pifs)
 
@@ -2186,7 +2187,7 @@ def mdadm_arrays():
     run_procs([[ProcOutput([MDADM, '--detail', '--scan'],
                            caps[CAP_DISK_INFO][MAX_TIME], output)]])
     # Format along the lines of:
-    # ARRAY /dev/mdN metadata=xxx [name=yyy] UUID=zzz
+    # ARRAY /dev/device metadata=metadata [name=name] UUID=uuid
     try:
         for line in output.getvalue().decode().split("\n"):
             parts = line.split(" ")

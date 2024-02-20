@@ -10,10 +10,10 @@ original = r"""<?xml version="1.0" ?>
 <root>
     <table name="secret">
         <row id="1">
-            <value>mysecretpassword</value>
+            <value>secret password</value>
         </row>
         <row id="2">
-            <value>anotherpassword</value>
+            <value>another password</value>
         </row>
     </table>
     <table name="Cluster">
@@ -23,8 +23,8 @@ original = r"""<?xml version="1.0" ?>
     </table>
     <table name="VM">
         <row id="1"
-        NVRAM="(('EFI-variables'%.'myprivatedata'))"
-        snapshot_metadata="('NVRAM'%.'(('_%.'_')%.(\'EFI-variables\'%.\'mydata\')()">
+        NVRAM="(('EFI-variables'%.'private data'))"
+        snapshot_metadata="('NVRAM'%.'(('_%.'_')%.(\'EFI-variables\'%.\'data\')()">
         </row>
     </table>
 </root>
@@ -66,8 +66,8 @@ def assert_xml_element_trees_equiv(a, b):
     # Compare the number of child nodes
     assert len(list(a)) == len(list(b))
     # Recursively repeat for all child nodes (expect same order of child nodes):
-    for achild, bchild in zip(list(a), list(b)):
-        assert_xml_element_trees_equiv(achild, bchild)
+    for child_a, child_b in zip(list(a), list(b)):
+        assert_xml_element_trees_equiv(child_a, child_b)
 
 
 def assert_xml_str_equiv(filtered, expected):

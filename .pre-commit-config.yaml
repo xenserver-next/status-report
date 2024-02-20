@@ -30,7 +30,7 @@
 # Further information:
 # https://pre-commit.com/#automatically-enabling-pre-commit-on-repositories
 # All hooks: https://pre-commit.com/hooks.html
-fail_fast: true
+fail_fast: false
 default_stages: [commit, push]
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
@@ -103,12 +103,23 @@ repos:
         additional_dependencies: [defusedxml, pytest, types-lxml, types-mock]
 
 
--   repo: https://github.com/pycqa/pylint
-    rev: v3.0.3
+-   repo: https://github.com/pylint-dev/pylint
+    rev: v3.0.4
     hooks:
     -   id: pylint
-        name: Run pylint to check that docstrings are added (and all other enabled checks)
-        log_file: ".git/pre-commit-pylint.log"
+        additional_dependencies: ['pylint[spelling]', pytest]
+        args: [--spelling-dict=en_US]  # See the comment in .pylintrc
+        files: '(^xen-bugtool|\.py)$'
+
+
+-   repo: local
+    hooks:
+    -   id: git-diff # Ref: https://github.com/pre-commit/pre-commit/issues/1712
+        name: Show not staged changes (fixups may make them too)
+        entry: sh -c '.vscode/ltex-sort-dictionary.sh && git diff --exit-code'
+        language: system
+        pass_filenames: false
+        always_run: true
 
 
 # Run "python3 -m pip install -r requirements-dev.txt" to run pytest or use "git commit --no-verify":
@@ -160,7 +171,7 @@ repos:
 
 
 -   repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.345
+    rev: v1.1.351
     hooks:
     -   id: pyright
         name: Run pyright to check the unit tests for any typing warnings (use for bugtool later)

@@ -8,13 +8,13 @@ def test_dir_list(bugtool):
     cap = bugtool.CAP_XENSERVER_CONFIG
     path_list = [__file__.replace(".", "*")]
 
-    # Assert that mis-matching cap causes no output in bugtool.data:
+    # Assert that mismatching cap causes no output in bugtool.data:
     bugtool.entries = [bugtool.CAP_DISK_INFO, cap, bugtool.CAP_PAM]
     bugtool.dir_list(cap=bugtool.CAP_XENSERVER_LOGS, path_list=path_list)
     assert bugtool.data == {}
 
-    # Assert that mis-matching path_list results in no bugtool.data:
-    bugtool.dir_list(cap=cap, path_list=[__file__ + "*notexist*"])
+    # Assert that mismatching path_list results in no bugtool.data:
+    bugtool.dir_list(cap=cap, path_list=[__file__ + "*nonexisting*"])
     assert bugtool.data == {}
 
     # Assert matching cap and path_list produces expected_data
