@@ -2,13 +2,13 @@
 
 
 def test_mdadm_arrays(bugtool, dom0_template):
-    """Assert mdadm_arrays() returning arrays of the mdadm mockup in the dom0-template"""
+    """Assert mdadm_arrays() returning arrays dom0_template/usr/sbin/mdadm"""
     bugtool.MDADM = dom0_template + "/usr/sbin/mdadm"
     assert list(bugtool.mdadm_arrays()) == ["/dev/md0", "/dev/md1"]
 
 
 def test_module_info(bugtool, dom0_template):
-    """Assert module_info() returning module names from mockup file in the dom0-template"""
+    """Assert module_info() returning module names from test_module_info.modules"""
 
     bugtool.PROC_MODULES = __file__.replace(".py", ".modules")
     bugtool.MODINFO = dom0_template + "/usr/sbin/modinfo"

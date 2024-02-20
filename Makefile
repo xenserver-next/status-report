@@ -9,3 +9,6 @@ darker-xen-bugtool:
 >  diff -u xen-bugtool $$tmp                          ;\
 >  if [ $$? != 0 ]; then cat $$tmp >xen-bugtool       ;fi
 >@ rm -f $$tmp
+
+pylint:
+> pylint xen-bugtool tests/*/*.py

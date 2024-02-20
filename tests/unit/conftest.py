@@ -42,6 +42,8 @@ def imported_bugtool(testdir, dom0_template):
     """Fixture to provide the xen-bugtool script as a module for unit tests"""
 
     def import_from_file(module_name, file_path):
+        """Inner function which loads a module from the given file path"""
+
         if sys.version_info.major == 2:  # pragma: no cover
             # Python 2.7, use the deprecated imp module (no alternative)
             # pylint: disable-next=deprecated-module
