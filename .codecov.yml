@@ -10,11 +10,11 @@
 #
 codecov:
   #
-  # Show the Codecov status without waiting for other status to pass:
+  # Show the Codecov status even when other CI steps fail:
   #
   require_ci_to_pass: no
   notify:
-    wait_for_ci: no
+    wait_for_ci: yes
 
 github_checks:
   #
@@ -85,9 +85,10 @@ comment:
 coverage:
 
   #
-  # Number of precision digits when showing coverage percentage e.g. 82%:
+  # Number of precision digits when showing coverage percentage e.g. 88.8%.
+  # One precision digit is also used by coverage.py when reporting coverage:
   #
-  precision: 0
+  precision: 1
 
   #
   # Commit status checks and display:
@@ -123,14 +124,14 @@ coverage:
         flags: ["python2.7"]
       tool-py3:  # declare a new status context "tool-py3"
         paths: ["xen-bugtool"]
-        flags: ["python3.10.13"]
+        flags: ["python3.10.14"]
 
       tests-py2:
         paths: ["tests/**/test_*.py"]
         flags: ["python2.7"]
       tests-py3:
         paths: ["tests/**/test_*.py"]
-        flags: ["python3.10.13"]
+        flags: ["python3.10.14"]
 
     #
     # Patch limits
@@ -155,11 +156,11 @@ coverage:
         flags: ["python2.7"]
       script-py3:
         paths: ["xen-bugtool"]
-        flags: ["python3.10.13"]
+        flags: ["python3.10.14"]
 
       tests-py2:
         paths: ["tests/**/test_*.py"]
         flags: ["python2.7"]
       tests-py3:
         paths: ["tests/**/test_*.py"]
-        flags: ["python3.10.13"]
+        flags: ["python3.10.14"]
