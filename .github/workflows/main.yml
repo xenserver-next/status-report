@@ -87,7 +87,9 @@ jobs:
       - name: Upload coverage reports to Codecov for the Python 2.7 tests
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        if: env.CODECOV_TOKEN && !cancelled() && github.event.pull_request.number
+        if: |
+          ${{ env.CODECOV_TOKEN && !cancelled() &&
+          ( github.event.pull_request.number || github.ref == 'refs/heads/master' ) }}
         run: >
           rm -rfv codecov;curl -O https://cli.codecov.io/latest/linux/codecov &&
           sudo chmod +x codecov && ./codecov upload-process --report-type coverage
@@ -98,7 +100,9 @@ jobs:
 
       - name: Upload coverage reports to Codecov for the Python 2.7 tests
         # If CODECOV_TOKEN is not set, use the legacy tokenless codecov action:
-        if: ${{ !env.CODECOV_TOKEN && github.event.pull_request.number }}
+        if: |
+          ${{ !env.CODECOV_TOKEN && !cancelled() &&
+          ( github.event.pull_request.number || github.ref == 'refs/heads/master' ) }}
         uses: codecov/codecov-action@v3
         env:
           PYTHON: python2.7
@@ -202,9 +206,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      # Codecov's tokenless upload requires Codecov to query the GitHub API to check
+      # the repo and the commit. Due to the massive rate of tokenless uploads, Codecov
+      # uploads often fail due to GitHub API rate limits. Therefore, the CODECOV_TOKEN
+      # should be set in the repository's secrets by the repository owner:
+      # https://docs.codecov.com/docs/adding-the-codecov-token
+      # For gh.com/xenserver/status-report, these are the links to get and set the token:
+      # Get: https://app.codecov.io/gh/xenserver/status-report/settings
+      # Set: https://github.com/xenserver/status-report/settings/secrets/actions
+      # Without it, the API calls are rate-limited by GitHub, and the upload may fail:
+      # https://github.com/codecov/feedback/issues/126#issuecomment-1932658904
       - name: Upload coverage reports to Codecov
-        # If CODECOV_TOKEN is set, use the new codecov CLI to upload the coverage reports
-        if: ${{ env.CODECOV_TOKEN && !cancelled() && github.event.pull_request.number }}
+        # If CODECOV_TOKEN is set, use the new Codecov CLI to upload the coverage reports
+        if: |
+          ${{ env.CODECOV_TOKEN && !cancelled() &&
+          ( github.event.pull_request.number || github.ref == 'refs/heads/master' ) }}
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: >
@@ -216,8 +232,10 @@ jobs:
 
 
       - name: Upload coverage reports to Codecov (legacy Node.js 16 action)
-        # If CODECOV_TOKEN is not set, use the legacy tokenless codecov action:
-        if: ${{ !env.CODECOV_TOKEN && github.event.pull_request.number }}
+        # If CODECOV_TOKEN is not set, use the legacy tokenless Codecov action:
+        if: |
+          ${{ !env.CODECOV_TOKEN && !cancelled() &&
+          ( github.event.pull_request.number || github.ref == 'refs/heads/master' ) }}
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         uses: codecov/codecov-action@v3
