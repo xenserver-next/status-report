@@ -3,6 +3,33 @@
 <files>/etc/passwd</files>
 <files>/etc/group</files>
 <files>/proc/self/status</files>
+
+<!--
+Test that multiple patterns work together and both are collected.
+
+Two patterns for the same directory, and each pattern matches one file:
+- the 1st pattern is negated and matches the file max_queued_events
+- the 2nd pattern matches the file max_user_instances:
+-->
+<directory pattern=".*user_.*" negate="yes">/proc/sys/fs/inotify</directory>
+<directory pattern=".*max_user_instances.*">/proc/sys/fs/inotify</directory>
+<!--
+Expected result, asserted by tests/unit/test_output.py:
+- 1st entry: /proc/sys/fs/inotify/max_queued_events
+- 2nd entry: /proc/sys/fs/inotify/max_user_instances
+-->
+
+<!--
+Test that the 2nd does not affect the file matched in the 1st:
+- the 1st pattern is matches the file max_user_watches
+- the 2nd pattern matches no file
+-->
 <directory pattern=".*ax_user_watches">/proc/sys/fs/epoll</directory>
+<directory pattern="no" negate="false">/proc/sys/fs/epoll</directory>
+<!--
+Expected result, asserted by tests/unit/test_output.py:
+- /proc/sys/fs/epoll/max_user_watches
+-->
+
 <command label="proc_version">cat /proc/version</command>
 </collect>

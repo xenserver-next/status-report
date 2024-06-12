@@ -50,6 +50,8 @@ def assert_mock_bugtool_plugin_output(temporary_directory, subdir, names):
         subdir + "/ls-l-%etc.out",
         subdir + "/proc/self/status",
         subdir + "/proc/sys/fs/epoll/max_user_watches",
+        subdir + "/proc/sys/fs/inotify/max_queued_events",
+        subdir + "/proc/sys/fs/inotify/max_user_instances",
         subdir + "/proc_version.out",
     ]
     assert sorted(names) == expected_names

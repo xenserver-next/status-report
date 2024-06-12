@@ -602,7 +602,10 @@ def file_output(cap, path_list):
 
 def tree_output(cap, path, pattern = None, negate = False):
     if cap in entries:
-        directory_specifications[path] = (cap, pattern, negate)
+        if path in directory_specifications:
+            directory_specifications[path].append((cap, pattern, negate))
+        else:
+            directory_specifications[path] = [(cap, pattern, negate)]
 
 
 def traverse_directory_specifications(directory_specs, requested_capabilities):
@@ -611,13 +614,15 @@ def traverse_directory_specifications(directory_specs, requested_capabilities):
     :param directory_specs: Directories to lookup with cap, pattern, and negate.
     :param requested_capabilities: The list of requested capabilities.
     """
-    for directory, directory_items in directory_specs.items():
-        # Unpack the stored capability, pattern and negate flag of each row:
-        capability, pattern, negate = directory_items
-        # If the capability is in the requested inventory entries, check it:
-        if capability in requested_capabilities:
-            if os.path.isdir(directory):
-                lookup_tree_recursively(capability, directory, pattern, negate)
+    for directory, tree_output_entries in directory_specs.items():
+        # Multiple tree_output calls may have appended multiple output entries:
+        for directory_items in tree_output_entries:
+            # Unpack the stored capability, pattern and negate flag of each row:
+            capability, pattern, negate = directory_items
+            # If the capability is in the requested inventory entries, check it:
+            if capability in requested_capabilities:
+                if os.path.isdir(directory):
+                    lookup_tree_recursively(capability, directory, pattern, negate)
 
 
 def lookup_tree_recursively(cap, path, pattern, negate):
