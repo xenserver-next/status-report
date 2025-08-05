@@ -32,5 +32,5 @@ Expected result, asserted by tests/unit/test_output.py:
 - /proc/sys/fs/epoll/max_user_watches
 -->
 
-<command label="proc_version">cat /proc/version</command>
+<command label="proc_version">/usr/sbin/cat /proc/version</command>
 </collect>
