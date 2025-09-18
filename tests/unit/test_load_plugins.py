@@ -2,7 +2,13 @@
 
 
 def test_load_plugins(bugtool, dom0_template):
-    """Assert () returning arrays of the  in the dom0-template"""
+    """
+    Assert the arrays expected by loading the mock plugin of the unit tests
+
+    To cover all lines of the new function is_deemed_executable(),
+    this test now calls the mock usr/sbin/cat in the dom0-template
+    using the absolute path it has inside of the dom0-template.
+    """
 
     # Use the plugins found in the dom0_template "/etc/xensource/bugtool":
     bugtool.PLUGIN_DIR = dom0_template + "/etc/xensource/bugtool"
@@ -46,7 +52,7 @@ def test_load_plugins(bugtool, dom0_template):
         },
         "proc_version": {
             "cap": "mock",
-            "cmd_args": "cat /proc/version",
+            "cmd_args": "/usr/sbin/cat /proc/version",
             "filter": None,
         },
     }
