@@ -198,6 +198,7 @@ pyarrow
 pyfakefs
 pylint
 pylintrc
+pyproject.toml
 pyright
 pytest
 pytest's

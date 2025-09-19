@@ -3,7 +3,9 @@
 
 check: darker-xen-bugtool pylint
 
-DARKER_OPTS = --isort -tpy36 --skip-string-normalization -l88
+# get the line-length from pyproject.toml
+LINE_LENGTH = $(shell sed -n 's/line-length = \([0-9]*\).*/\1/p' pyproject.toml)
+DARKER_OPTS = --isort -tpy36 -l$(LINE_LENGTH)
 darker-xen-bugtool:
 >@ pip install 'darker[isort]'
 >@ tmp=`mktemp`                                       ;\
