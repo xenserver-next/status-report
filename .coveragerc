@@ -20,6 +20,7 @@ output = .git/coverage.xml
 # Regular expressions for lines to exclude from consideration
 exclude_lines =
     # Don't complain if tests don't hit catch-all exception handlers:
+    assert self.proc and self.proc.stdout
     except:
     except Exception
     except IOError
@@ -38,6 +39,7 @@ exclude_lines =
     if 0:
     if __name__ == .__main__.:
     if TYPE_CHECKING:
+    import XenAPI
     # skip any line with a `pass` (such as may be used for @abstractmethod or @suffixed_method)
     pass
 

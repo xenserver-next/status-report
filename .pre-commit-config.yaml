@@ -50,7 +50,7 @@ repos:
         args: ['--fix=lf']
         name: 'check and fix that line endings are line feeds'
     -   id: check-added-large-files
-        args: ['--maxkb=12']
+        args: ['--maxkb=90']
         name: 'check that no large files are added'
     -   id: check-executables-have-shebangs
     -   id: debug-statements
@@ -97,17 +97,34 @@ repos:
           - isort
 
 
+-   repo: local
+    hooks:
+    # basedpyright: Advanced fork of pyright with GitHub CI annotations
+    -   id: basedpyright
+        name: basedpyright
+        entry: basedpyright
+        files: '(^xen-bugtool|\.py)$'
+        language: python
+        verbose: true
+        require_serial: true
+        additional_dependencies:
+        - basedpyright == 1.31.4
+        - defusedxml
+        - lxml
+        - mock
+        - pytest
+
+
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0
     hooks:
     -   id: mypy
         name: Run mypy to check e.g. that all expected arguments are passed to functions etc
         additional_dependencies:
-        - defusedxml
+        - types-defusedxml
         - pytest
         - types-lxml
         - types-mock
-        - types-requests
 
 
 -   repo: https://github.com/pylint-dev/pylint
@@ -136,7 +153,6 @@ repos:
         language: python
         always_run: true
         pass_filenames: false
-        additional_dependencies: [requests]
 
 
     -   id: git-diff # Ref: https://github.com/pre-commit/pre-commit/issues/1712
@@ -172,7 +188,7 @@ repos:
     -   id: diff-cover
         name: check that that the changed lines are covered by tests
         entry: diff-cover --ignore-whitespace --compare-branch=origin/master
-            --show-uncovered --html-report .git/coverage-diff.html
+            --show-uncovered --format html:.git/coverage-diff.html
             --fail-under 100 .git/coverage.xml
         require_serial: true
         pass_filenames: false
@@ -192,25 +208,54 @@ repos:
 
 
 -   repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.351
+    rev: v1.1.405
     hooks:
     -   id: pyright
         name: Run pyright to check the unit tests for any typing warnings (use for bugtool later)
-        exclude: xen-bugtool
-        additional_dependencies: [defusedxml, pytest, lxml, mock, XenAPI]
+        additional_dependencies: [defusedxml, pytest, lxml, mock]
 
 
--   repo: https://github.com/mattseymour/pre-commit-pytype
-    rev: '2023.5.8'
+#
+# Use this to check the unit tests for any typing warnings:
+# $ pre-commit run pytype --all-files
+#
+# Pytype can only check the unit tests as xen-bugtool itself uses too many dynamic
+# constructs, which pytype cannot handle and loops forever.
+#
+# Pytype will eventually be removed when PyLance, (based)pyright and mypy cover
+# xen-bugtool and the unit tests well enough as good alternatives:
+#
+# Google announced that pytype is not actively developed anymore. See the
+# announcement for the details (using the bytecode in pytype) for this decision:
+# https://github.com/google/pytype/blob/main/README.md
+#
+# Until removal, use a fork of the pre-commit-pytype repository for the availability
+# of newer pytype versions, which are not limited to Python 3.10. Use Python 3.11.3,
+# which is also used for XenServer 9 currently.
+#
+-   repo: https://github.com/xenserver-next/pre-commit-pytype
+    rev: '2024.10.11'
     hooks:
     -   id: pytype
-        # Note: Pytype does not support Python 3.12 yet:
+        #
+        # If you don't have Python 3.11 installed, e.g. when using pyenv,
+        # you can install it using:
+        # $ pyenv install 3.11.3
+        # Then, set it as local version for this repository:
+        # $ pyenv local 3.11.3
+        #
+        # Alternatively, on Ubuntu 22.04 or 24.04, you can install it using:
+        # sudo apt-get install -y python3.11-venv python3.11-dev
+        #
+        # Note: Use the same Python version (3.11) here in pre-commit as
+        # the GitHub Actions Workflow .github/workflows/main.yml for working CI.
+        #
+        # Locally, you can use a different Python version by changing this line here.
+        #
+        # Note: Pytype does not officially support Python 3.12:
         # https://google.github.io/pytype/support.html
         #
-        # If your pre-commit has been installed in a Python3.12 environment,
-        # you need to uncomment the next line to run pytype in a Python3.10 environment:
-        # that also the GitHub Action currently uses:
-        # language_version: "3.10"
+        language_version: "3.11"
         name: Run pytype to check the unit tests for any typing warnings (does not work on bugtool yet)
         exclude: xen-bugtool
         additional_dependencies: [pytest]
