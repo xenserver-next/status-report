@@ -1,5 +1,7 @@
 """Regression tests for bugtool helper functions like get_recent_logs()"""
 
+import os
+
 
 def test_get_recent_logs(bugtool):
     """Assert get_recent_logs() returning the most recent file(s)"""
@@ -17,6 +19,28 @@ def test_read_inventory(bugtool, dom0_template):
 
     inventory = bugtool.readKeyValueFile(dom0_template + bugtool.XENSOURCE_INVENTORY)
     assert inventory["PRODUCT_VERSION"] == "8.3.0"
+
+
+def test_removeNoError(bugtool, tmpdir):
+    """Test bugtool.removeNoError() to remove a file without raising an OSError"""
+
+    # Arrange:
+
+    # Create a file in a per-test temp directory to be removed:
+    filename = str(tmpdir.join("file_to_remove"))
+    with open(filename, "w") as f:
+        f.write("to be removed")
+
+    # Assert:
+
+    assert os.path.exists(filename)
+    bugtool.removeNoError(filename)
+    # The file should be removed now
+    assert not os.path.exists(filename)
+
+    # Removing a non-existing file should not raise an exception:
+    bugtool.removeNoError(filename)
+    bugtool.removeNoError("/non/existing/file/to/remove")
 
 
 def test_disk_list(bugtool, tmpdir):

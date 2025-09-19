@@ -3,7 +3,7 @@
 name = "xenserver-status-report"
 dynamic = ["version"]
 description = "Xenserver Status Report"
-requires-python = ">=2.7"
+requires-python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 license = "LGPL-2.1-only"
 keywords = ["xenserver", "xen-project"]
 authors = [
@@ -20,7 +20,6 @@ readme = "README.md"
 classifiers = [
     "Environment :: Console",
     "Development Status :: 5 - Production/Stable",
-    "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
     "Operating System :: POSIX :: Linux :: XenServer/XCP-ng Dom0",
     "Programming Language :: Python :: 2.7",
     "Programming Language :: Python :: Implementation :: CPython",
@@ -35,6 +34,18 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "pytest<7",
+]
+
+[dependency-groups]
+dev = [
+    "basedpyright",
+    "black",
+    "isort",
+    "mypy",
+    "pytest<7",
+    "pytest-mock",
+    "types-defusedxml",
+    "types-six",
 ]
 
 [project.urls]
@@ -98,6 +109,34 @@ disable_error_code = [
     "no-any-unimported",
     "no-untyped-call",
     "no-untyped-def",
-    "str-format", # Will be easy to fix
+    # "str-format", # Will be easy to fix
     "unreachable"
 ]
+
+
+[tool.pyright]
+include = ["xen-bugtool", "tests"]
+pythonPlatform = "Linux"
+pythonVersion = "3.6"
+stubPath = "stubs"
+
+typeCheckingMode = "strict"
+# Exceptions to strict mode:
+reportConstantRedefinition = false
+reportImplicitStringConcatenation = false
+reportMissingParameterType = false
+reportTypeCommentUsage = false
+reportUninitializedInstanceVariable = false
+reportUnknownArgumentType = false
+reportUnknownLambdaType = false
+reportUnknownMemberType = false
+reportUnknownParameterType = false
+reportUnknownVariableType = false
+
+# exclusive settings for basedpyright
+# https://docs.basedpyright.com/v1.22.1/configuration/config-files/#basedpyright-exclusive-settings_2
+reportAny = false
+reportIgnoreCommentWithoutRule = false
+reportUnannotatedClassAttribute = false
+reportUnreachable = false
+reportUnusedParameter = false

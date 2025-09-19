@@ -107,7 +107,7 @@ max-returns=11
 # Maximum number of statements in function / method body.
 # defaults to: max-statements=50
 # For the Python3 fix for bugtool.load_plugins():
-max-statements=52
+max-statements=53
 
 [FORMAT]
 
