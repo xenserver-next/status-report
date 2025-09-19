@@ -34,7 +34,7 @@ fail_fast: false
 default_stages: [commit, push]
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     # https://github.com/pre-commit/pre-commit-hooks/blob/main/README.md:
     hooks:
     -   id: no-commit-to-branch
@@ -64,7 +64,7 @@ repos:
 # pytest with code coverage at the end.
 
 -   repo: https://github.com/PyCQA/autoflake
-    rev: v2.2.1
+    rev: v2.3.1
     hooks:
     -   id: autoflake
         name: Run autoflake to automatically remove unused variables and imports
@@ -116,7 +116,7 @@ repos:
 
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
+    rev: v1.18.2
     hooks:
     -   id: mypy
         name: Run mypy to check e.g. that all expected arguments are passed to functions etc

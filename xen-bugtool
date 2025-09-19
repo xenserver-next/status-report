@@ -60,7 +60,7 @@ import xml
 import xml.sax
 import zipfile
 from collections import OrderedDict
-from contextlib import contextmanager, suppress
+from contextlib import contextmanager
 from hashlib import md5 as md5_new
 from select import select
 from signal import SIGHUP, SIGTERM, SIGUSR1
@@ -511,6 +511,14 @@ dictionaries with the following keys:
 directory_specifications = OrderedDict()
 dev_null = open('/dev/null', 'r+')
 
+@contextmanager
+def suppress(exc_type):
+    """Context manager to suppress specified exceptions (Python 2 compatible)"""
+    try:
+        yield
+    except exc_type:
+        pass
+
 
 class StringIOmtime(io.BytesIO):
     """Byte buffer object with mtime for TarOutput/ZipOutput"""
@@ -564,7 +572,7 @@ def cmd_output(cap, args, label = None, filter = None):
     if cap in entries:
         if not label:
             if isinstance(args, list):
-                a = [aa for aa in args]
+                a = list(args)
                 a[0] = os.path.basename(a[0])
                 label = ' '.join(a)
             else:
@@ -572,10 +580,7 @@ def cmd_output(cap, args, label = None, filter = None):
         data[label] = {'cap': cap, 'cmd_args': args, 'filter': filter}
 
 def dir_list(cap, path_list, recursive = False):
-    flags = '-l'
-    if recursive:
-        flags = '-lR'
-
+    flags = '-lR' if recursive else '-l'
     pl = []
     for path in path_list:
         pl.extend(glob.glob(path))
@@ -598,7 +603,7 @@ def file_output(cap, path_list):
                     cap_sizes[cap] += s.st_size
                 else:
                     log("Omitting %s, size constraint of %s exceeded" % (p, cap))
-            except:
+            except Exception:
                 pass
 
 def tree_output(cap, path, pattern = None, negate = False):
@@ -642,7 +647,7 @@ def lookup_tree_recursively(cap, path, pattern, negate):
             elif os.path.isdir(fn):
                 lookup_tree_recursively(cap, fn, pattern, negate)
     except Exception as e:
-        logging.info("Lookup for " + cap + ": %s" % e)
+        logging.info("Lookup for %s: %s", cap, e)
 
 
 def func_output(cap, label, func):
@@ -678,9 +683,9 @@ def run_procs_and_capture_collected_output(collect, subdir, archive):
     process_lists = {}
     for k, v in collect.items():
         name = construct_filename(subdir, k, v)
-        cap = v['cap']
         if "cmd_args" in v:
             v['output'] = StringIOmtime()
+            cap = v['cap']
             if cap not in process_lists:
                 process_lists[cap] = []
             process_lists[cap].append(
@@ -716,59 +721,67 @@ def collect_data(subdir, archive):
     # Afterwards, traverse the directory specifications for files to add
     traverse_directory_specifications(directory_specifications, entries)
 
+    collect_proc_files_and_func_outputs(subdir, archive)
+
+
+def collect_proc_files_and_func_outputs(subdir, archive):
+    """Collect all procfs and function output and archive it in the passed output archive"""
     # Then, loop over the files which were found and collect their contents
     for k, v in data.items():
         if "cmd_args" in v:
             continue  # commands processing has been moved to a different loop
-        name = construct_filename(subdir, k, v)
-        cap = v["cap"]
-        filename = v.get("filename")
-        if filename and (filename.startswith("/proc/") or filename.startswith("/sys/")):
-            # proc files must be read into memory
-            try:
-                f = open(v["filename"], "rb")
+        collect_proc_file_and_func_output(subdir, archive, k, v)
+
+
+def collect_proc_file_and_func_output(subdir, archive, k, v):
+    name = construct_filename(subdir, k, v)
+    cap = v["cap"]
+    filename = v.get("filename")
+    if filename and (filename.startswith("/proc/") or filename.startswith("/sys/")):
+        # proc files must be read into memory
+        try:
+            with open(v["filename"], "rb") as f:
                 s = f.read(unlimited_data and -1 or caps[cap][MAX_SIZE])
-                f.close()
-                if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
-                        cap_sizes[cap] < caps[cap][MAX_SIZE] or len(s) == 0:
-                    v['output'] = StringIOmtime(s)
-                    archive.add_path_with_data(name, v['output'])
-                    v['md5'] = md5sum(v)
-                    del v['output']
-                    cap_sizes[cap] += len(s)
-                else:
-                    log("Omitting %s, size constraint of %s exceeded" % (v['filename'], cap))
-            except IOError as e:
-                if e.errno != 2:
-                    log("IOError reading %s: %s" % (filename, e))
-        elif "func" in v:
-            try:
-                s = no_unicode(v["func"](cap))
-            except Exception:
-                backtrace = traceback.format_exc()  # type: str
-                log(backtrace)
-                s = backtrace.encode()
+            # If unlimited_data is set, or the file is smaller than the max_size,
+            # or the file is empty, include it in the archive:
             if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
-                    cap_sizes[cap] < caps[cap][MAX_SIZE]:
+                    cap_sizes[cap] < caps[cap][MAX_SIZE] or len(s) == 0:
                 v['output'] = StringIOmtime(s)
                 archive.add_path_with_data(name, v['output'])
                 v['md5'] = md5sum(v)
                 del v['output']
                 cap_sizes[cap] += len(s)
             else:
-                log("Omitting %s, size constraint of %s exceeded" % (k, cap))
-        elif filename:
-            try:
-                archive.addRealFile(name, filename)
-            except:
-                pass
+                log("Omitting %s, size constraint of %s exceeded" % (v['filename'], cap))
+        except IOError as e:
+            if e.errno != 2:
+                log("IOError reading %s: %s" % (filename, e))
+    elif "func" in v:
+        try:
+            s = no_unicode(v["func"](cap))
+        except Exception:
+            backtrace = traceback.format_exc()  # type: str
+            log(backtrace)
+            s = backtrace.encode()
+        if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
+                cap_sizes[cap] < caps[cap][MAX_SIZE]:
+            v['output'] = StringIOmtime(s)
+            archive.add_path_with_data(name, v['output'])
+            v['md5'] = md5sum(v)
+            del v['output']
+            cap_sizes[cap] += len(s)
+        else:
+            log("Omitting %s, size constraint of %s exceeded" % (k, cap))
+    elif filename:
+        with suppress(Exception):
+            archive.addRealFile(name, filename)
 
 
 def usage():
     return '''Usage: xenserver-status-report [OPTION]...
 Capture information to help diagnose bugs.
 
- --capabilities      output capabilities informations
+ --capabilities      output capabilities information
  --output            specify output format (tar, tar.bz2 or zip)
  -s, --silent        silent mode
  --entries=<list>    specify which capabilities (separated by commas)
@@ -1826,9 +1839,9 @@ def load_plugins(just_capabilities = False):
         if just_capabilities:
             continue
 
-        plugdir = os.path.join(PLUGIN_DIR, dir)
-        for file in [f for f in os.listdir(plugdir) if f.endswith('.xml')]:
-            xmldoc = parse(os.path.join(plugdir, file))
+        plugins_dir = os.path.join(PLUGIN_DIR, dir)
+        for file in [f for f in os.listdir(plugins_dir) if f.endswith('.xml')]:
+            xmldoc = parse(os.path.join(plugins_dir, file))
             assert xmldoc.documentElement
             assert xmldoc.documentElement.tagName == "collect"
 
@@ -1849,10 +1862,8 @@ def load_plugins(just_capabilities = False):
                     cmd_output(dir, getText(el.childNodes), label)
 
 def removeNoError(filename):
-    try:
+    with suppress(OSError):
         os.remove(filename)
-    except OSError:
-        pass
 
 class TarSubArchive(io.BytesIO):
     """Utility class for adding tarfile subarchives to the output archive"""
@@ -1918,13 +1929,11 @@ class TarOutput(ArchiveWithTarSubarchives):
         super(TarOutput, self).__init__()
         self.output_fd = output_fd
         self.subdir = subdir
-        mode = 'w|'
-        if suffix == 'tar.bz2':
-            mode = 'w|bz2'
+        mode = 'w|bz2' if suffix == 'tar.bz2' else 'w|'
         self.filename = "%s/%s.%s" % (BUG_DIR, subdir, suffix)
 
         if output_fd == -1:
-            self.tf = tarfile.open(name=self.filename, mode=mode)
+            self.tf = tarfile.open(self.filename, mode)  # type: ignore[call-overload]
         else:
             try:  # Python3.6 does not support "ab" if the file is not seekable:
                 binary_fileobj = os.fdopen(output_fd, "ab")
@@ -2386,27 +2395,18 @@ def pidof(name):
     return pids
 
 
-def readKeyValueFile(filename, allowed_keys = None, strip_quotes = True):
+def readKeyValueFile(filename):
     """ Reads a KEY=Value style file (e.g. xensource-inventory). Returns a
     dictionary of key/values in the file.  Not designed for use with large files
     as the file is read entirely into memory."""
 
-    f = open(filename, "r")
-    lines = [x.strip("\n") for x in f.readlines()]
-    f.close()
+    with open(filename, "r") as f:
+        lines = [x.strip("\n") for x in f.readlines()]
 
-    # remove lines contain
-    if allowed_keys:
-        lines = [l for l in lines if True in [l.startswith(y) for y in allowed_keys]]
-
-    defs = [ (l[:l.find("=")], l[(l.find("=") + 1):]) for l in lines ]
-
-    if strip_quotes:
-        def quotestrip(x):
-            return x.strip("'")
-        defs = [ (a, quotestrip(b)) for (a,b) in defs ]
-
-    return dict(defs)
+    # read key/value pairs, stripping single quotes, ignoring lines without '='
+    # lines = [line.strip("'") for line in lines if "=" in line]
+    # Return a dictionary of key/value pairs
+    return dict(line.replace("'", "").split("=", 1) for line in lines if "=" in line)
 
 
 if __name__ == "__main__":

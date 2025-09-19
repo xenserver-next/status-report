@@ -1,4 +1,5 @@
 """tests/unit/test_xapidb_filter.py: Ensure that the xen-bugtool.DBFilter() filters the XAPI DB properly"""
+
 import os
 import sys
 from xml.dom.minidom import parseString

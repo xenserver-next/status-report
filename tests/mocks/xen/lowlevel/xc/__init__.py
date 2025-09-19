@@ -1,4 +1,5 @@
 """Mock xen.lowlevel.xc for testing the xen-bugtool python application"""
+
 Error = None
 
 
