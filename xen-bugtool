@@ -57,9 +57,10 @@ import tarfile
 import time
 import traceback
 import xml
+import xml.sax
 import zipfile
 from collections import OrderedDict
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from hashlib import md5 as md5_new
 from select import select
 from signal import SIGHUP, SIGTERM, SIGUSR1
@@ -91,17 +92,18 @@ else:
 #   Specifically, it calls close which further writes to the file, which
 #   fails with ENOSPC if the root filesystem is full
 if sys.version < "3.7":
-    zipfile_del = zipfile.ZipFile.__del__  # type: ignore[attr-defined] # mypy,pyright
+    zipfile_del = zipfile.ZipFile.__del__
 
     def exceptionless_del(*argl, **kwargs):
         try:
             zipfile_del(*argl, **kwargs)
         except OSError:
             pass
-    zipfile.ZipFile.__del__ = exceptionless_del  # type: ignore[attr-defined] # mypy,pyright
+
+    zipfile.ZipFile.__del__ = exceptionless_del
 
 def xapi_local_session():
-    import XenAPI  # Import on first use.
+    import XenAPI  # type: ignore[import] # Import on first use.
     return XenAPI.xapi_local()
 
 OS_RELEASE = platform.release()
@@ -491,7 +493,7 @@ cap(CAP_BLOCK_SCHEDULER,           PII_NO,                    max_size=100*KB,
 
 ANSWER_YES_TO_ALL = False
 SILENT_MODE = False
-entries = None
+entries = []  # type: list[str] # The list of requested capabilities
 data = {}
 """The global data dictionary of xen-bugtool
 It is filled by the various *_output functions, and then used to create the
@@ -524,8 +526,9 @@ class StringIOmtime(io.BytesIO):
         return io.BytesIO.write(self, no_unicode(s))
 
 
-def no_unicode(x):
-    return x.encode("utf-8") if isinstance(x, unicode_type) else x
+def no_unicode(x):  # type: (bytes | str | ReadableBuffer | io.BytesIO) -> bytes
+    """Return bytes, never unicode"""
+    return x.encode("utf-8") if isinstance(x, unicode_type) else x  # type: ignore
 
 
 @contextmanager
@@ -1425,7 +1428,7 @@ def dump_xapi_subprocess_info(cap):
                 return i.split()[-1]
         return None
     def pstree(pid):
-        result = { "cmdline": cmdline(pid) }
+        result = {"cmdline": cmdline(pid)}  # type: dict[str, str | dict[str, str]]
         child_pids = [child_pid for child_pid in all_pids if parent(child_pid) == pid]
         children = { }
         for child in child_pids:
@@ -1460,6 +1463,7 @@ def dump_xapi_rrds(requested_entries):
         return
     socket.setdefaulttimeout(5)
     session = xapi_local_session()
+    assert session.xenapi
     session.xenapi.login_with_password('', '', '', 'xenserver-status-report')
     this_host = session.xenapi.session.get_this_host(session._session)
     # better way to find pool master?
@@ -1496,7 +1500,7 @@ def dump_xapi_rrds(requested_entries):
         output = rrd.read()
         func_output(CAP_PERSISTENT_STATS, 'xapi_rrd-host', lambda _: output)
     finally:
-        rrd.close()
+        rrd.close()  # pyright: ignore
 
     session.xenapi.session.logout()
 
@@ -1541,9 +1545,11 @@ class XapiDBContentHandler(xml.sax.ContentHandler):
             self.table = attrs["name"]
 
         if name == "row":
-            self._filter(attrs._attrs)
+            self._filter(attrs._attrs)  # pyright: ignore[reportAttributeAccessIssue]
 
-        element = Element(name, attrib=attrs._attrs)
+        element = Element(
+            name, attrib=attrs._attrs  # pyright: ignore[reportAttributeAccessIssue]
+        )
         self.elements_stack.append(element)
 
     def endElement(self, name):
@@ -1573,10 +1579,11 @@ class DBFilter:
         nopass_xml = re.sub(r"\('(\w*(?:password)\w*)'%\.'\w*'\)", r"('\1'%.'REMOVED')", raw_xml)
 
         self.content_handler = XapiDBContentHandler()
-        try:
+        with suppress(
+            xml.sax._exceptions.SAXParseException  # pyright: ignore[reportAttributeAccessIssue]
+        ):
+            # try parsing as a whole document first
             defusedxml.sax.parseString(no_unicode(nopass_xml), self.content_handler)
-        except xml.sax._exceptions.SAXParseException:
-            pass  # parse command output line by line, first line just headers
 
     def output(self):
         return self.content_handler.output()
@@ -1624,9 +1631,9 @@ def filter_xapi_clusterd_db(cap):
     return output_str
 
 def dump_filtered_xapi_db(cap):
-    db_file = None
+    db_file = ""
 
-    # determine DB file name
+    # read /etc/xapi/db.conf to determine the DB file name
     c = open(DB_CONF, 'r')
     try:
         for line in c:
@@ -1793,6 +1800,7 @@ def load_plugins(just_capabilities = False):
             if not os.path.exists("%s/%s.xml" % (PLUGIN_DIR, dir)):
                 continue
             xmldoc = parse("%s/%s.xml" % (PLUGIN_DIR, dir))
+            assert xmldoc.documentElement
             assert xmldoc.documentElement.tagName == "capability"
 
             pii, min_size, max_size, min_time, max_time, mime = \
@@ -1821,6 +1829,7 @@ def load_plugins(just_capabilities = False):
         plugdir = os.path.join(PLUGIN_DIR, dir)
         for file in [f for f in os.listdir(plugdir) if f.endswith('.xml')]:
             xmldoc = parse(os.path.join(plugdir, file))
+            assert xmldoc.documentElement
             assert xmldoc.documentElement.tagName == "collect"
 
             for el in xmldoc.documentElement.getElementsByTagName("*"):
@@ -1862,7 +1871,7 @@ class TarSubArchive(io.BytesIO):
     def add_file_with_path(self, name, filename):
         """
         Add a file to the subarchive
-        :param name: Recorded path of the the file in the tar archive for extraction
+        :param name: Recorded path of the file in the tar archive for extraction
         :param filename: Real file name of the file to be added to the tar archive
         """
         with open(filename, "rb") as buffered_reader:
@@ -1915,7 +1924,7 @@ class TarOutput(ArchiveWithTarSubarchives):
         self.filename = "%s/%s.%s" % (BUG_DIR, subdir, suffix)
 
         if output_fd == -1:
-            self.tf = tarfile.open(self.filename, mode)
+            self.tf = tarfile.open(name=self.filename, mode=mode)
         else:
             try:  # Python3.6 does not support "ab" if the file is not seekable:
                 binary_fileobj = os.fdopen(output_fd, "ab")
@@ -2074,7 +2083,11 @@ def construct_filename(subdir, k, v):
 
 
 def update_capabilities():
-    from xen.lowlevel.xc import Error as xcError, xc  # Import on first use.
+    # Import on first use. This avoids import-time dependency on xen lowlevel
+    from xen.lowlevel.xc import (  # pyright: ignore[reportMissingImports]
+        Error as xcError,
+        xc,
+    )
 
     update_cap_size(CAP_HOST_CRASHDUMP_LOGS,
                     size_of_dir(HOST_CRASHDUMPS_DIR, HOST_CRASHDUMP_LOGS_EXCLUDES_RE, True))
@@ -2254,6 +2267,7 @@ class ProcOutput:
                 stderr=dev_null,
                 shell=isinstance(self.command, str),
             )
+            assert self.proc.stdout
             old = fcntl.fcntl(self.proc.stdout.fileno(), fcntl.F_GETFD)
             fcntl.fcntl(self.proc.stdout.fileno(), fcntl.F_SETFD, old | fcntl.FD_CLOEXEC)
             self.running = True
@@ -2266,6 +2280,7 @@ class ProcOutput:
     def terminate(self):
         if self.running:
             try:
+                assert self.proc and self.proc.stdout
                 self.proc.stdout.close()
                 os.kill(self.proc.pid, SIGTERM)
             except:

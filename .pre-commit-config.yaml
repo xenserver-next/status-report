@@ -50,7 +50,7 @@ repos:
         args: ['--fix=lf']
         name: 'check and fix that line endings are line feeds'
     -   id: check-added-large-files
-        args: ['--maxkb=12']
+        args: ['--maxkb=89']
         name: 'check that no large files are added'
     -   id: check-executables-have-shebangs
     -   id: debug-statements
@@ -95,6 +95,19 @@ repos:
         args: [darker-xen-bugtool]
         additional_dependencies:
           - isort
+
+
+-   repo: local
+    hooks:
+    # basedpyright: Advanced fork of pyright with GitHub CI annotations
+    -   id: basedpyright
+        name: basedpyright
+        entry: basedpyright
+        files: '(^xen-bugtool|\.py)$'
+        language: python
+        verbose: true
+        require_serial: true
+        additional_dependencies: [basedpyright == 1.31.4, defusedxml, pytest, lxml, mock]
 
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
@@ -172,7 +185,7 @@ repos:
     -   id: diff-cover
         name: check that that the changed lines are covered by tests
         entry: diff-cover --ignore-whitespace --compare-branch=origin/master
-            --show-uncovered --html-report .git/coverage-diff.html
+            --show-uncovered --format html:.git/coverage-diff.html
             --fail-under 100 .git/coverage.xml
         require_serial: true
         pass_filenames: false
@@ -192,16 +205,37 @@ repos:
 
 
 -   repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.351
+    rev: v1.1.405
     hooks:
     -   id: pyright
         name: Run pyright to check the unit tests for any typing warnings (use for bugtool later)
-        exclude: xen-bugtool
-        additional_dependencies: [defusedxml, pytest, lxml, mock, XenAPI]
+        # exclude: xen-bugtool
+        additional_dependencies: [defusedxml, pytest, lxml, mock]
 
 
--   repo: https://github.com/mattseymour/pre-commit-pytype
-    rev: '2023.5.8'
+# -   repo: https://github.com/DetachHead/basedpyright-pre-commit-mirror
+#     rev: HEAD
+#     hooks:
+#     -   id: basedpyright
+#         # name: basedpyright
+#         # entry: basedpyright
+#         # language: python
+#         # minimum_pre_commit_version: 2.9.2
+#         # require_serial: true
+#         # types_or: [python, pyi]
+#         additional_dependencies: [defusedxml, pytest, lxml, mock]
+
+
+#
+# Pytype can only check the unit tests.
+# Use this to check the unit tests for any typing warnings:
+# $ pre-commit run pytype --all-files
+#
+# Use a fork of the pre-commit-pytype repository for the availability of newer
+# pytype versions, which are not limited to Python 3.10 and support Python 3.12:
+#
+-   repo: https://github.com/xenserver-next/pre-commit-pytype
+    rev: '2024.10.11'
     hooks:
     -   id: pytype
         # Note: Pytype does not support Python 3.12 yet:
@@ -210,7 +244,7 @@ repos:
         # If your pre-commit has been installed in a Python3.12 environment,
         # you need to uncomment the next line to run pytype in a Python3.10 environment:
         # that also the GitHub Action currently uses:
-        # language_version: "3.10"
+        language_version: "3.12"
         name: Run pytype to check the unit tests for any typing warnings (does not work on bugtool yet)
         exclude: xen-bugtool
         additional_dependencies: [pytest]

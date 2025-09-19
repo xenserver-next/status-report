@@ -51,7 +51,7 @@ def imported_bugtool(testdir, dom0_template):
         if sys.version_info.major == 2:  # pragma: no cover
             # Python 2.7, use the deprecated imp module (no alternative)
             # pylint: disable-next=deprecated-module
-            import imp  # pyright: ignore[reportMissingImports]
+            import imp
 
             module = imp.load_source(module_name, file_path)
 
