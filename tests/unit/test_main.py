@@ -232,17 +232,15 @@ def check_output(bugtool, captured, tmp_path, filename, filetype):
 
 def assert_bugtool_logfile_data(logfile):
     """
+    Check the contents of the xen-bugtool.log file created by xen-bugtool
     Given that --entries= includes `xen-bugtool`, the output should contain a log
     file with the backtrace from the Exception raised by the mock data collector:
     """
     log = logfile.read()
     lines = log.splitlines()
     assert len(lines) >= 2
-    assert lines[0].startswith(
-        "xen-bugtool --unlimited --entries=xenserver-config,"
-        "xenserver-databases,mock,xen-bugtool,unknown --out",
-    )
-    assert lines[1].startswith("PATH=")
+    assert lines[0] == " ".join(sys.argv)
+    assert lines[1] == "PATH=" + os.environ.get("PATH", "")
 
     #
     # Given that the exception raised by the mock data collector function is
