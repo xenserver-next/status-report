@@ -189,7 +189,8 @@ jobs:
           string: ${{ github.repository }}
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v2
+        uses: SonarSource/sonarqube-scan-action@v6
+        continue-on-error: true  # Fails if org/repo is not fully bound in SonarCloud
         if: ${{ env.SONAR_TOKEN }}
         with:
           args: >

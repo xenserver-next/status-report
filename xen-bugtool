@@ -2371,18 +2371,13 @@ def pidof(name):
     return pids
 
 
-def readKeyValueFile(filename, allowed_keys = None, strip_quotes = True):
+def readKeyValueFile(filename, strip_quotes=True):
     """ Reads a KEY=Value style file (e.g. xensource-inventory). Returns a
     dictionary of key/values in the file.  Not designed for use with large files
     as the file is read entirely into memory."""
 
-    f = open(filename, "r")
-    lines = [x.strip("\n") for x in f.readlines()]
-    f.close()
-
-    # remove lines contain
-    if allowed_keys:
-        lines = [l for l in lines if True in [l.startswith(y) for y in allowed_keys]]
+    with open(filename, "r") as f:
+        lines = [x.strip("\n") for x in f.readlines()]
 
     defs = [ (l[:l.find("=")], l[(l.find("=") + 1):]) for l in lines ]
 
