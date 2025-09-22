@@ -506,7 +506,17 @@ dictionaries with the following keys:
   - "filter": An optional filter function to pass the file data through
 """
 
-directory_specifications = OrderedDict()
+directory_specifications = OrderedDict()  # type: OrderedDict[str, list[tuple[str, str | None, bool]]]
+"""
+Ordered dict of the rules to collect directory contents created by the tree_output calls.
+
+The key is the directory path passed to tree_output,
+The value is a list of tuples with (capability, pattern, negate),
+collected from the tree_output calls:
+
+- multiple calls for the same directory exist due to bugtool plugins (auto-cert-kit)
+- the elements of those tuples from each tree_output call are: cap, pattern, negate
+"""
 dev_null = open('/dev/null', 'r+')
 
 
@@ -672,7 +682,7 @@ def run_procs_and_capture_collected_output(collect, subdir, archive):
     """
 
     # Prepare the process_list dictionary
-    process_lists = {}
+    process_lists = {}  # type: dict[str, list[ProcOutputAndArchive]]
     for k, v in collect.items():
         name = construct_filename(subdir, k, v)
         cap = v['cap']
@@ -1425,7 +1435,7 @@ def dump_xapi_subprocess_info(cap):
                 return i.split()[-1]
         return None
     def pstree(pid):
-        result = { "cmdline": cmdline(pid) }
+        result = {"cmdline": cmdline(pid)}  # type: dict[str, str | dict[str, str]]
         child_pids = [child_pid for child_pid in all_pids if parent(child_pid) == pid]
         children = { }
         for child in child_pids:
@@ -1624,9 +1634,9 @@ def filter_xapi_clusterd_db(cap):
     return output_str
 
 def dump_filtered_xapi_db(cap):
-    db_file = None
+    db_file = ""
 
-    # determine DB file name
+    # read /etc/xapi/db.conf to determine the DB file name
     c = open(DB_CONF, 'r')
     try:
         for line in c:
@@ -1830,12 +1840,12 @@ def load_plugins(just_capabilities = False):
                     recursive = getBoolAttr(el, 'recursive')
                     dir_list(dir, getText(el.childNodes).split(), recursive)
                 elif el.tagName == "directory":
-                    pattern = el.getAttribute("pattern")
+                    pattern = el.getAttribute("pattern")  # type: str | None
                     if pattern == '': pattern = None
                     negate = getBoolAttr(el, 'negate')
                     tree_output(dir, getText(el.childNodes), pattern and re.compile(pattern) or None, negate)
                 elif el.tagName == "command":
-                    label = el.getAttribute("label")
+                    label = el.getAttribute("label")  # type: str | None
                     if label == '': label = None
                     cmd_output(dir, getText(el.childNodes), label)
 
