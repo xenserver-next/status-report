@@ -126,6 +126,7 @@ ioports
 iscsi
 ISCSIADM
 iscsid
+isfile
 isort
 issuercert
 json
@@ -246,6 +247,8 @@ subdirectory
 subprocesses
 swtpm
 symlink
+symlinked
+symlinks
 symref
 sys
 systemd

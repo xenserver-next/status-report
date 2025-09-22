@@ -6,13 +6,13 @@ import zipfile
 
 from lxml.etree import XMLSchema, parse  # pytype: disable=import-error
 
-MOCK_EXCEPTION_STRINGS = (
+MOCK_EXCEPTION_STRINGS = [
     "Traceback (most recent call last):",
     ", in collect_data",
     ", in mock_data_collector",
     'raise Exception("mock data collector failed")',
     "Exception: mock data collector failed",
-)
+]
 
 
 def mock_data_collector(capability):

@@ -249,11 +249,25 @@ def assert_bugtool_logfile_data(logfile):
     # caught and logged, the log file should contain the backtrace from the
     # raised exception:
     #
+    logfile_lines = 11
     if sys.version_info >= (3, 11):  # pragma: no cover
-        assert len(lines) == 10  # Python 3.11+ includes a new line in the backtrace
-    else:
-        assert len(lines) == 9
-    for backtrace_string in MOCK_EXCEPTION_STRINGS:
+        logfile_lines += 1  # Python 3.11+ includes a new line in the backtrace
+    assert len(lines) == logfile_lines
+
+    #
+    # Some log messages are only logged to the logfile, not to stdout:
+    # These are not part of MOCK_EXCEPTION_STRINGS as they are
+    # only logged to the logfile, not to stdout.
+    # They depend on the requested --entries= and the test environment.
+    # The order of these log messages in the log is not guaranteed.
+    #
+    missing = "Missing command for cap "
+    only_logged_to_the_logfile = [
+        missing + "xenserver-databases: xe pool-dump-database file-name=",
+        missing + "mock: /usr/sbin/This command doesn't exist",
+    ]
+    # Check that all expected lines (also the backtrace) are in the log file:
+    for backtrace_string in MOCK_EXCEPTION_STRINGS + only_logged_to_the_logfile:
         assert backtrace_string in log
 
 
