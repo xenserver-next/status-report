@@ -6,13 +6,13 @@ import zipfile
 
 from lxml.etree import XMLSchema, parse  # pytype: disable=import-error
 
-MOCK_EXCEPTION_STRINGS = (
+MOCK_EXCEPTION_STRINGS = [
     "Traceback (most recent call last):",
     ", in collect_data",
     ", in mock_data_collector",
     'raise Exception("mock data collector failed")',
     "Exception: mock data collector failed",
-)
+]
 
 
 def mock_data_collector(capability):
@@ -121,7 +121,7 @@ def assert_minimal_bugtool(bugtool, state_archive, dom0_template, cap):
 
     # When debug output from ProcOutput is enabled, "Starting" is printed:
     if bugtool.ProcOutput.debug:
-        version = "cat /proc/version"
+        version = "/usr/sbin/cat /proc/version"
         etc_dir = "ls -l %s/etc" % dom0_template
         for msg in [version, etc_dir]:
             assert "[time.strftime]  Starting '%s'\n" % msg in captured_stdout

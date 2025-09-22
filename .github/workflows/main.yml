@@ -272,4 +272,15 @@ jobs:
         env:
           COVERALLS_FLAG_NAME: ${{ format('python{0}', steps.python.outputs.python-version ) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pip install coveralls && coveralls --service=github && coveralls --finish || true
+        run: pip install coveralls && coveralls --service=github
+
+
+  finish-coverage-upload:
+    if: github.actor != 'nektos/act'
+    needs: [python2-tests, pre-commit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finish the coverage upload to Coveralls
+        uses: coverallsapp/github-action@v1
+        with:
+          parallel-finished: true
