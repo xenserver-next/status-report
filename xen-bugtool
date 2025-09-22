@@ -491,7 +491,8 @@ cap(CAP_BLOCK_SCHEDULER,           PII_NO,                    max_size=100*KB,
 
 ANSWER_YES_TO_ALL = False
 SILENT_MODE = False
-entries = None
+ # entries: The list of requested capabilities upon invocation of xen-bugtool
+entries = []  # type: list[str]
 data = {}
 """The global data dictionary of xen-bugtool
 It is filled by the various *_output functions, and then used to create the
@@ -672,7 +673,7 @@ def run_procs_and_capture_collected_output(collect, subdir, archive):
     """
 
     # Prepare the process_list dictionary
-    process_lists = {}
+    process_lists = {}  # type: dict[str, list[ProcOutputAndArchive]]
     for k, v in collect.items():
         name = construct_filename(subdir, k, v)
         cap = v['cap']
@@ -1335,10 +1336,11 @@ exclude those logs from the archive.
     if output_fd == -1:
         output_ts('Creating output file')
 
-    if output_type.startswith('tar'):
-        archive = TarOutput(subdir, output_type, output_fd)
-    else:
-        archive = ZipOutput(subdir)
+    archive = (
+        TarOutput(subdir, output_type, output_fd)
+        if output_type.startswith('tar')
+        else ZipOutput(subdir)
+    )
     archive.declare_subarchive(SYSTEMD_CONF_DIR, subdir + SYSTEMD_CONF_DIR + ".tar")
 
     # collect selected data now
@@ -1425,7 +1427,7 @@ def dump_xapi_subprocess_info(cap):
                 return i.split()[-1]
         return None
     def pstree(pid):
-        result = { "cmdline": cmdline(pid) }
+        result = {"cmdline": cmdline(pid)}  # type: dict[str, str | dict[str, str]]
         child_pids = [child_pid for child_pid in all_pids if parent(child_pid) == pid]
         children = { }
         for child in child_pids:
@@ -1753,7 +1755,7 @@ def bond_list():
 
 def fd_usage(cap):
     output = ''
-    fd_dict = {}
+    fd_dict = {}  # type: dict[int, list[str]]
     for d in [p for p in os.listdir('/proc') if p.isdigit()]:
         try:
             with open('/proc/'+d+'/cmdline') as fh:
@@ -2226,6 +2228,7 @@ class ProcOutput:
         self.max_time = max_time
         self.start_time = None
         self.inst = inst
+        self.proc = None  # type: Popen[bytes] | None
         self.running = False
         self.status = None
         self.timed_out = False
