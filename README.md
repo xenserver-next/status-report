@@ -9,14 +9,28 @@ the development environment for `xen-bugtool`,
 a tool designed to assist with debugging XenServer issues.
 
 For more information, see these README files:
+
+Development practices and guidelines:
+- [doc/development.md](doc/development.md): Development guidelines and best practices
+- [doc/release.md](doc/release.md): Instructions for creating a new release
+
+Setting up the development environment:
 - [README-python-install.md](README-python-install.md) - Preparing your
   Development VM for running the test suite
-- [README-pytest.md](README-pytest.md) - Introduction on the recommended pytest suite for unit tests
-- [README-pytest-chroot.md](README-pytest-chroot.md) - Introduction on the `pytest-chroot` test suite
 - [README-Windows-WSL2.md](README-Windows-WSL2.md) - Windows and WSL2 setup tips
-- [doc/pre-commit.md](doc/pre-commmit.md):
+
+Automated tests:
+- [doc/testing.md](doc/testing.md): Overview of the different types of tests
+- [doc/pre-commit.md](doc/pre-commit.md):
   Using `pre-commit` to run the test and static analysis checks locally
 - [doc/coverage.md](doc/coverage.md): Introduction on **coverage** from `pytest`
+
+Documentation on pytest and its fixtures:
+- [README-pytest.md](README-pytest.md): Introduction on the recommended pytest suite for unit tests
+- [README-pytest-chroot.md](README-pytest-chroot.md):
+  Introduction on the `pytest`-based integration test suite using namespaces
+- [tests/unit/conftest-README.md](tests/unit/conftest-README.md):
+  Introduction on the `pytest` fixtures defined in `tests/unit/conftest.py`
 
 ## Frequently asked Questions
 
@@ -140,6 +154,7 @@ pip install radon
 # Clone python-libs, and host-installer copy perfmon from xen-api, then run:
 radon cc xen-bugtool host-installer/ perfmon xcp --total-average -nd --md
 ```
+
 ##### Output:
 
 | Filename | Name | Type | Start:End Line | Complexity | Classification |

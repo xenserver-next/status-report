@@ -191,6 +191,16 @@ repos:
         additional_dependencies: [coverage]
 
 
+- repo: https://github.com/igorshubovych/markdownlint-cli
+  rev: v0.45.0
+  hooks:
+  - id: markdownlint
+    # Exclude all markdown files in the root, test and doc directories,
+    # as fixing them need to be done in separate commits or PRs.
+    # files: .github/instructions/.*\.md
+    # exclude: ^(README.*\.md|tests/.*\.md)$
+
+
 -   repo: https://github.com/RobertCraigie/pyright-python
     rev: v1.1.351
     hooks:

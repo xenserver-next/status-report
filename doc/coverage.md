@@ -1,4 +1,4 @@
-## Unit tests with Code coverage with Codecov and Coveralls
+# Unit tests with Code coverage with Codecov and Coveralls
 
 [`pre-commit`](coverage.md) runs `pytest --cov` to collect code coverage
 in its native SQLite database in the file `.coverage` and to generate
