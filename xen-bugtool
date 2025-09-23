@@ -1524,8 +1524,14 @@ class XapiDBContentHandler(xml.sax.ContentHandler):
         s = re.sub(r"(?P<start>\'NVRAM\'\%\.\'\((\(\'[^\']+\%\.\'[^.]+\'\)\%\.)*\(\\\'EFI-variables\\\'\%\.\\\')[^\']+(?P<end>\\\')", r"\g<start>REMOVED\g<end>", metadata)
         attrs["snapshot_metadata"] = s
 
+    # Filter out wlb_password from the row entries of the pool table
+    def _filter_wlb_password(self, attrs):
+        if "wlb_password" in attrs:
+            attrs["wlb_password"] = self.STRIP_STR
+
     def _filter(self, attrs):
         table_filters = {
+            "pool": self._filter_wlb_password,
             "secret": self._filter_secret_table,
             "VM": self._filter_vm_table,
             "Cluster": self._filter_cluster_table
