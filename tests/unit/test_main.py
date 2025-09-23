@@ -297,10 +297,18 @@ def patched_bugtool(bugtool, mocker, dom0_template, tmp_path):
     :param dom0_template: The path to the dom0 template directory.
     :param tmp_path: The temporary path for storing files.
     """
+    saved_db_conf = bugtool.DB_CONF
     patch_bugtool(bugtool, mocker, dom0_template, "main_mocked", tmp_path)
 
     base_path = tmp_path / os.environ["XENRT_BUGTOOL_BASENAME"]
-    return bugtool, base_path.as_posix(), tmp_path.as_posix()
+
+    # Yield to run the test case, providing the patched bugtool module,
+    # the base path and the tmp path to the test case:
+    yield bugtool, base_path.as_posix(), tmp_path.as_posix()
+
+    # Cleanup: Remove the created DB_CONF file and restore the original value:
+    os.remove(bugtool.DB_CONF)
+    bugtool.DB_CONF = saved_db_conf
 
 
 def test_main_func_output_to_zipfile(patched_bugtool, capfd):
