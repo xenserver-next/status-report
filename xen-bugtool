@@ -507,6 +507,15 @@ dictionaries with the following keys:
 """
 
 directory_specifications = OrderedDict()
+"""
+Ordered dict of the rules to collect directory contents.
+
+It is filled by tree_output calls, and then processed by
+traverse_directory_specifications() to add individual directory entries.
+The keys are the directory paths, and the values are lists of tuples of
+(capability, pattern, negate) as passed to tree_output().
+"""
+
 dev_null = open('/dev/null', 'r+')
 
 
