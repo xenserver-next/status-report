@@ -70,7 +70,39 @@ python3 -m pytest tests/unit
 python3 -m pytest tests/unit/test_filter_xapi_clusterd_db.py
 ```
 
-See the https://docs.pytest.org for more documentation on `pytest.
+### Debugging test cases
+
+To prevent `pytest` capturing the output for the test case to check
+the output and see the output instead, use `pytest -s` to see all output.
+
+To debug an issue by adding output to the test or the code under test,
+(or the test case), you can instrument the code at the desired location:
+
+```py
+import logging; logging.warning("variable=%s", variable)
+```
+
+The reason why this is best is that `pytest` captures the `stdout` and `stderr`
+of the test case and the code under test, and some test cases check the output.
+Thus, using `print()` would break these test cases.
+
+As we do not test the use of the `logging` module in the code under test, we have
+it available to add debug output to the code under test for debugging purposes.
+
+### Easy way to define a custom breakpoint in the code under test
+
+Without using extra tools or IDEs, the easiest way to debug a test case is to
+add a breakpoint in the code under test. To get an interactive python debugger
+prompt, add the following line to the code at the desired location:
+
+```py
+import pdb; pdb.set_trace()
+```
+
+The test case will stop at this location and provide an interactive
+debugging prompt to inspect variables and step through the code.
+
+See <https://docs.pytest.org> for more documentation on `pytest`.
 
 
 ## Test cases for xenserver-status-report
