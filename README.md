@@ -20,57 +20,63 @@ For more information, see these README files:
 
 ## Frequently asked Questions
 
-### Is the master branch ready for Python3?
+### How stable and well-tested is the Python3 support in `xen-bugtool`?
+- It is completely stable and well-tested from usage on XS9:
+  The last Python3 issue was fixed 25 March 2024, and since then,
+  there have been no further Python3 issues.
+- The test suite runs with very high code coverage on both Python2 and Python3
+  and is run on every commit by GitHub Actions.
 
-Yes, it is ready for testing with Python in XS9 using Python3.11 to be precise.
+### Is Python2 support still needed?
+No. As regular support for XenServer 8.2 has ended, and there are no plans
+to backport big changes to XenServer 8.2, Python2 support is no longer needed.
 
-But, there are still 7 open subtasks below CP-48020 (remaining Py2->Py3 work)
-that are not yet done.
+### Why was Python2 support kept for so long?
+In case of backporting complex changes to XenServer 8.2, actual use of Python2
+mode on XenServer 8.4 provided confidence that Python2 support was still working.
+But this aspect is no longer a concern.
 
-See the related question on whether we should remove support for Python2.
+### What are the benefits of dropping Python2 support?
+- Switching `xen-bugtool` to Python3 on XenServer 8.4 too should de-risk it from
+  breaking its Python2 support accidentally when making changes to `xen-bugtool`:
+- As developers now use Python3, the risk of accidentally breaking Python2 support
+  exists. With Python2 support dropped, this risk is gone.
+- Also, more friendly Python3 features become available:
 
-### Should we remove Python2 compatibility to make the code simple?
+  - `contextlib` context manager `suppress` instead of try-except or try-finally.
+  - `f-strings` instead of the older `%` formatting and "str1" + "str1", etc.
+  - `pathlib` instead of `os.path`
+  - Type annotations that can use type aliases for better readability
 
-There are three misconceptions in this question:
+# How is the change to Python3-only implemented?
 
-#### Python2 is not ready to be removed.
-There are still 7 open tasks below CP-48020 (remaining Python2 to Python3 work)
-that are not yet done.
-- `xenserver-status-report` needs to be validated on Python3 in order to use it
-  for production use on Python3, and the open tasks are an indication that there
-  are a few cases that need testing.
+In this repo, the change to Python3-only is implemented in these steps:
+1. Switch the shebang line to `#!/usr/bin/env python3`
+2. Disable the Python2 test runs in GitHub Actions.
 
-#### We need the current code to be Python2-compatible for backports or Hotfixes for the Yangtze release.
+In the RPM spec file, the change to Python3-only is implemented by:
+3. Replace the `python2` RPM dependencies with `python3` dependencies
 
-Example:
-UPD-990 for the Yangtze release contains CP-41238 ([XSI-1344] Bugtool should
-contain up-to-date RRDs):
-- The fix for CP-41238/XSI-1344 depends on other commits on master.
-- Instead of backporting these large changes (potentially introducing errors)
-  and having to maintain that older branch for the Yangtze release, it will be
-  less work to use master for UPD-990 for fixing XSI-1344.
-  - Because we use master for XS8 as well, master is in constant production use
-    with Python2 in:
-    - XenRT
-    - Internal diagnostics
-    - Customer support.
-  - Therefore, we know that master is already in production use since quite some
-    time with Python2, and we can safely use master for the Yangtze hotfix UPD-990 too.
-  - This means, due to the constant testing in XenRT and Customer support, we
-    know that we can safely deploy master for Yangtze hotfixes like UPD-990.
+Once this is done, python2 compatibility code can be removed.
 
-This benefit alone is quite big.
+But, there is no hurry to do this, as the Python2 compatibility code
+is negligible and does not affect the main code paths.
 
-#### The Python2 conditions are trivial, and the complexity is elsewhere.
+#### Which python2 compatibility code can be removed?
 
 There are only 5 (yes, just five) conditions in the status-report code where
 there is a tiny special case for Python2/Python3. Compared to the total size
 of over 2390 lines of the program, this is totally negligible.
 
-That means it does not increase or decrease the complexity by any perceivable
-amount:
-- Five simple if conditions that have no real code below them have very low
-  complexity by any measure.
+Being free to use more elegant Python3 features can make the code
+easier to read and maintain, which can reduce cognitive load over time.
+
+The main change is that with Python3-only, the code can use more elegant
+constructs like `contextlib.suppress` instead of try-except or
+try-finally, and `f-strings` instead of the older `%` formatting.
+
+However, removing these five simple if conditions that run next to no code
+does not change the overall code that much.
 
 See the next question for the concrete data that fosters this point.
 

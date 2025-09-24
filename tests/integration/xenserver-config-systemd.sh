@@ -1,18 +1,14 @@
 #!/bin/bash
 # This test must run as root in a container(docker, podman, toolbox, apptainer, (s)chroot):
-# It is currently started from .github/workflows/alpine-python2.yml
 # Precondition: python with all dependencies from requirements.txt is installed
 # WARNING: xen-bugtool needs to run run as user root in the container it runs in!
-#
-# A quick way to run it is:
-# act -W .github/workflows/alpine-python2.yml
 #
 # exit on any error
 set -o errexit
 set -o pipefail
 if [[ -n "$TRACE" ]]; then set -o xtrace; fi
 set -o nounset
-: ${PYTHON:=python2}
+: ${PYTHON:=python3}
 
 # Prepare test container: Mock the files used by this test
 cp -a tests/integration/dom0-template/* /

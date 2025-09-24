@@ -1,27 +1,30 @@
-## Running CI checks locally (and in GitHub CI using `pre-commit`)
+## Running CI checks locally (and in GitHub CI) using `pre-commit`
 
-This project uses `pre-commit` to run the tests in `virtualenv`s for Python2.7
-and Python3.x:
-- It fixes the code style of the tests with black and of xen-bugtool with darker
-- It runs pytest with coverage and check the coverage on the changed lines
+This project uses `pre-commit` to run the tests in a defined, clean environment:
+
+- It fixes the code style of the tests with black and of `xen-bugtool` with darker
+- It runs `pytest` with coverage and checks the coverage on the changed lines
 - It runs `pylint`, `mypy`, `pyright` and `pytype`:
 
-The pre-commit configuration defines how it runs
-`pytest`, `pylint` and static analysis using `mypy`, `pyright`, and `pytype`.
 Links:
 - https://mypy.readthedocs.io/en/stable/
 - https://microsoft.github.io/pyright/
 - https://google.github.io/pytype/user_guide.html
 
-- Because this project is a hybrid Python2 & Python3 project, type comments
-  (described in PEP 484) are used instead of Python3 type annotations:
-[Suggested syntax for Python 2.7 and straddling code](https://peps.python.org/pep-0484/#suggested-syntax-for-python-2-7-and-straddling-code)
+- Because this project is now using Python3.6+, type annotations (PEP 484)
+  no longer need to be in comments, but can be in the code directly.
 
-`pre-commit` runs the full analysis and test suite for Python 2.7 and 3.x.
-It is used locally before commit/push and for GitHub CI:
+  However, for compatibility with Python3.6 and type annotations like `list[str]`
+  and `str | None` are not supported in Python3.6, so the older syntax
+  `List[str]` and `Optional[str]` from the `typing` module have to be used,
+  or continue to use type comments as before (described in PEP 484).
+  See https://docs.python.org/3/library/typing.html#typing.List
+
+To run all checks on all files, run:
 
 ```bash
-pip3 install pre-commit
+uv pip install pre-commit
+. .venv/bin/activate  # (if using a virtualenv)
 pre-commit run -av
 ```
 Without -a, it would only run hooks for staged files with changes.
