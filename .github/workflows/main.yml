@@ -33,8 +33,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
 
 env:
-  # Setup Coveralls to for parallel coverage upload from python2 and 3 workflows
-  COVERALLS_PARALLEL: true
   DEBIAN_FRONTEND: noninteractive
   # No warnings for pip and pytest themselves; pytest enables warnings in conftest.py
   PYTHONWARNINGS: ignore
@@ -42,10 +40,10 @@ env:
   PYTHONDEVMODE: yes
 jobs:
   container-tests:
-    name: "Python2: Container tests"
+    name: "Docker container tests"
     runs-on: ubuntu-22.04
-    # https://github.com/Docker-Hub-frolvlad/docker-alpine-python2
-    container: frolvlad/alpine-python2
+    # https://github.com/Docker-Hub-frolvlad/docker-alpine-python3
+    container: frolvlad/alpine-python3:latest
     steps:
       - uses: actions/checkout@v4
       - name: Install test tools
@@ -57,86 +55,8 @@ jobs:
       - name: Test creating a tarball for /etc/systemd
         run: bash -x tests/integration/xenserver-config-systemd.sh
 
-  python2-tests:
-    name: "Python2: PyLint and Pytest"
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: LizardByte/setup-python-action@master
-        with:
-          python-version: 2.7
-
-      - name: Install dependencies
-        run: |
-          if [ -f requirements.txt ]; then pip2 install -r requirements.txt; fi
-          if [ -f requirements-dev.txt ]; then pip2 install -r requirements-dev.txt; fi
-          pip2 install pylint==1.9.4; sudo mkdir /opt/xensource # mountpoint for tests
-
-      - name: Run pylint-1.9.4 for pylint --py3k linting (configured in .pylintrc)
-        run: python2 -m pylint xen-bugtool
-      - name: Run python2 -m pytest to execute all unit and integration tests
-        run: >
-          python2 -m pytest -v -rA
-          --cov xen-bugtool
-          --cov tests/
-          --junitxml=.git/pytest27.xml
-          --cov-report term-missing
-          --cov-report xml:.git/coverage27.xml
-
-      - name: Upload to Codecov (CLI uploader with CODECOV_TOKEN)
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        if: |
-          env.CODECOV_TOKEN && !cancelled() &&
-          ( github.event.pull_request.number || github.ref == 'refs/heads/master' )
-        run: >
-          rm -rfv codecov;curl -O https://cli.codecov.io/latest/linux/codecov &&
-          sudo chmod +x codecov && ./codecov upload-process --report-type coverage
-          --git-service github --fail-on-error --file .git/coverage27.xml
-          --flag python2.7 --name "Python 2.7 CLI uploader"
-        continue-on-error: true
-
-
-      - name: Upload to Codecov (legacy Node.js 16 action, tokenless)
-        # If CODECOV_TOKEN is not set, use the legacy tokenless codecov action:
-        if: |
-          !env.CODECOV_TOKEN && !cancelled() &&
-          ( github.event.pull_request.number || github.ref == 'refs/heads/master' )
-        uses: codecov/codecov-action@v3
-        env:
-          PYTHON: python2.7
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        with:
-          directory: .git
-          files: coverage27.xml
-          flags: python2.7
-          env_vars: OS,PYTHON
-          fail_ci_if_error: false
-          name: "Python 2.7 Node.js uploader"
-          verbose: true
-
-      - name: Add Pytest 2.7 coverage comment (if write permission is available)
-        if: ${{ ! github.event.pull_request.head.repo.fork && github.event.pull_request.number }}
-        uses: MishaKav/pytest-coverage-comment@main
-        continue-on-error: true
-        with:
-          junitxml-path: .git/pytest27.xml
-          pytest-xml-coverage-path: .git/coverage27.xml
-          unique-id-for-comment: pytest-coverage-python27
-          title: Pytest Code coverage comment for Python 2.7
-
-      - name: Upload coverage reports to Coveralls
-        env:
-          COVERALLS_FLAG_NAME: python2.7
-          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          curl -sL https://coveralls.io/coveralls-linux.tar.gz | tar -xz
-          cp .git/coverage27.xml coverage.xml
-          ./coveralls --service-name=github --format=cobertura
-
   pre-commit:
-    name: "Python3: Pre-Commit Suite"
+    name: "Pre-Commit Hooks"
     runs-on: ubuntu-22.04
     env:
       PYTHON_VERSION: "3.10"
@@ -272,4 +192,5 @@ jobs:
         env:
           COVERALLS_FLAG_NAME: ${{ format('python{0}', steps.python.outputs.python-version ) }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pip install coveralls && coveralls --service=github && coveralls --finish || true
+        # Stability of coveralls is fixed now, no need for continue-on-error: true
+        run: pip install coveralls && coveralls --service=github

@@ -1,6 +1,5 @@
 #!/bin/bash
 # This test is expected to be run as root in a container(docker, podman, toolbox, apptainer, (s)chroot):
-# It is currently started from .github/workflows/alpine-python2.yml
 # Precondition: python with all dependencies from requirements.txt is installed
 # WARNING: This is running as user root in the container it runs in!
 #
@@ -10,9 +9,9 @@ set -o pipefail
 if [[ -n "$TRACE" ]]; then set -o xtrace; fi
 set -o nounset
 SRC=$PWD
-: ${PYTHON:=python2}
+: ${PYTHON:=python3}
 
-# The bugtool capabilitiy this test is testing:
+# The bugtool capability this test is testing:
 CAP=system-load
 
 # Test object: A dummy sar files (Unix system activity reporter from the sysstat pkg)
