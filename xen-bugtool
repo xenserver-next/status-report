@@ -711,7 +711,12 @@ def run_procs_and_capture_collected_output(collect, subdir, archive):
 
 
 def collect_data(subdir, archive):
-    """Collect all requested data and archive it in the passed output archive
+    """This function orchestrates the data collection process.
+
+    It runs external processes first, as they may trigger the generation
+    and/or update of files to archive, then traverses the directory specs
+    for files to add and finally delegates collecting the data from the
+    files to add_file_data_and_func_outputs_to_archive.
 
     :param subdir: The toplevel directory in which to store the output files.
     :param archive: The archive object used to store the output files.
@@ -723,51 +728,94 @@ def collect_data(subdir, archive):
     traverse_directory_specifications(directory_specifications, entries)
 
     # Then, loop over the files which were found and collect their contents
+    add_file_data_and_func_outputs_to_archive(subdir, archive)
+
+
+def add_file_data_and_func_outputs_to_archive(subdir, archive):
+    """Collect all /proc and function outputs and add them to the output archive.
+
+    It loops over the files to collect and run and the requested collection functions,
+    skipping external commands as they have already been executed to generate files.
+
+    :param subdir: The toplevel directory in which to store the output files.
+    :param archive: The archive object used to store the output files.
+    """
     for k, v in data.items():
+        # Skip commands as they have already been executed (for generating files)
         if "cmd_args" in v:
             continue  # commands processing has been moved to a different loop
-        name = construct_filename(subdir, k, v)
-        cap = v["cap"]
-        filename = v.get("filename")
-        if filename and (filename.startswith("/proc/") or filename.startswith("/sys/")):
-            # proc files must be read into memory
-            try:
-                f = open(v["filename"], "rb")
-                s = f.read(unlimited_data and -1 or caps[cap][MAX_SIZE])
-                f.close()
-                if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
-                        cap_sizes[cap] < caps[cap][MAX_SIZE] or len(s) == 0:
-                    v['output'] = StringIOmtime(s)
-                    archive.add_path_with_data(name, v['output'])
-                    v['md5'] = md5sum(v)
-                    del v['output']
-                    cap_sizes[cap] += len(s)
-                else:
-                    log("Omitting %s, size constraint of %s exceeded" % (v['filename'], cap))
-            except IOError as e:
-                if e.errno != 2:
-                    log("IOError reading %s: %s" % (filename, e))
-        elif "func" in v:
-            try:
-                s = no_unicode(v["func"](cap))
-            except Exception:
-                backtrace = traceback.format_exc()  # type: str
-                log(backtrace)
-                s = backtrace.encode()
+        collect_file_data_or_function_output(subdir, archive, k, v)
+
+
+def collect_file_data_or_function_output(subdir, archive, k, v):
+    """Add file data and collection function outputs to the output archive
+
+    This function:
+    - reads proc and sys file into memory and adds the read data to the archive
+    - runs bugtool-internal functions and adds the collected data to the archive
+    - adds regular files to the archive
+
+    :param subdir: str. The top-level directory in which to store the output files.
+    :param archive: Archive object. The archive used to store the output files.
+    :param k: str. The key representing the file or function to collect.
+    :param v: dict. The metadata and information about the file or function to collect.
+    """
+
+    name = construct_filename(subdir, k, v)
+    cap = v["cap"]
+    filename = v.get("filename")
+    if filename and (filename.startswith("/proc/") or filename.startswith("/sys/")):
+        # Collect data from proc and sys files. Proc/sys files often report a size of 0 or incorrect values in stat(),
+        # so their contents must be read into memory rather than relying on file size for processing.
+        try:
+            f = open(v["filename"], "rb")
+            s = f.read(unlimited_data and -1 or caps[cap][MAX_SIZE])
+            f.close()
+
+            # Add the proc or sys data to the output archive if any of these conditions are met:
+            # - unlimited_data is set (or the max_size for this capability is unlimited)
+            # - the accumulated cap_size of the cap is not reached yet
+            # - the file is empty
             if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
-                    cap_sizes[cap] < caps[cap][MAX_SIZE]:
+                    cap_sizes[cap] < caps[cap][MAX_SIZE] or len(s) == 0:
                 v['output'] = StringIOmtime(s)
                 archive.add_path_with_data(name, v['output'])
                 v['md5'] = md5sum(v)
                 del v['output']
                 cap_sizes[cap] += len(s)
             else:
-                log("Omitting %s, size constraint of %s exceeded" % (k, cap))
-        elif filename:
-            try:
-                archive.addRealFile(name, filename)
-            except:
-                pass
+                log("Omitting %s, size constraint of %s exceeded" % (v['filename'], cap))
+        except IOError as e:
+            if e.errno != 2:
+                log("IOError reading %s: %s" % (filename, e))
+
+    elif "func" in v:
+        # Run the specified data collection function and pass the capability to it
+        try:
+            s = no_unicode(v["func"](cap))
+        except Exception:
+            backtrace = traceback.format_exc()  # type: str
+            log(backtrace)
+            s = backtrace.encode()
+
+        # Add the data if unlimited_data is set, the max_size for this capability is unlimited,
+        # or the accumulated cap_size hasn't been reached yet.
+        if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
+                cap_sizes[cap] < caps[cap][MAX_SIZE]:
+            v['output'] = StringIOmtime(s)
+            archive.add_path_with_data(name, v['output'])
+            v['md5'] = md5sum(v)
+            del v['output']
+            cap_sizes[cap] += len(s)
+        else:
+            log("Omitting %s, size constraint of %s exceeded" % (k, cap))
+
+    elif filename:
+        # Add the data of the simple regular file
+        try:
+            archive.addRealFile(name, filename)
+        except:
+            pass
 
 
 def usage():
