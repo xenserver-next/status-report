@@ -765,8 +765,8 @@ def collect_file_data_or_function_output(subdir, archive, k, v):
     cap = v["cap"]
     filename = v.get("filename")
     if filename and (filename.startswith("/proc/") or filename.startswith("/sys/")):
-        # Collect data from proc and sys files. As their stat() size is not correct,
-        # proc files must be read into memory
+        # Collect data from proc and sys files. Proc/sys files often report a size of 0 or incorrect values in stat(),
+        # so their contents must be read into memory rather than relying on file size for processing.
         try:
             f = open(v["filename"], "rb")
             s = f.read(unlimited_data and -1 or caps[cap][MAX_SIZE])
