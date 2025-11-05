@@ -772,10 +772,10 @@ def collect_file_data_or_function_output(subdir, archive, k, v):
             s = f.read(unlimited_data and -1 or caps[cap][MAX_SIZE])
             f.close()
 
-            # If unlimited_data is set (or the max_size for this capability is unlimited)
-            # or the accumulated cap_size of the cap is not reached yet,
-            # or the file is empty, add the proc or sys data to the output archive:
-
+            # Add the proc or sys data to the output archive if any of these conditions are met:
+            # - unlimited_data is set (or the max_size for this capability is unlimited)
+            # - the accumulated cap_size of the cap is not reached yet
+            # - the file is empty
             if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
                     cap_sizes[cap] < caps[cap][MAX_SIZE] or len(s) == 0:
                 v['output'] = StringIOmtime(s)
