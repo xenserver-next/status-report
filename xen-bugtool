@@ -798,9 +798,8 @@ def collect_file_data_or_function_output(subdir, archive, k, v):
             log(backtrace)
             s = backtrace.encode()
 
-        # If unlimited_data is set (or the max_size for this capability is unlimited)
-        # or the accumulated cap_size of the cap is not reached yet, add the data:
-
+        # Add the data if unlimited_data is set, the max_size for this capability is unlimited,
+        # or the accumulated cap_size hasn't been reached yet.
         if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
                 cap_sizes[cap] < caps[cap][MAX_SIZE]:
             v['output'] = StringIOmtime(s)
