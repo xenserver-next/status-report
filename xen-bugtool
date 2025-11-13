@@ -491,7 +491,8 @@ cap(CAP_BLOCK_SCHEDULER,           PII_NO,                    max_size=100*KB,
 
 ANSWER_YES_TO_ALL = False
 SILENT_MODE = False
-entries = None
+ # entries: The list of requested capabilities upon invocation of xen-bugtool
+entries = []  # type: list[str]
 data = {}
 """The global data dictionary of xen-bugtool
 It is filled by the various *_output functions, and then used to create the
@@ -681,7 +682,7 @@ def run_procs_and_capture_collected_output(collect, subdir, archive):
     """
 
     # Prepare the process_list dictionary
-    process_lists = {}
+    process_lists = {}  # type: dict[str, list[ProcOutputAndArchive]]
     for k, v in collect.items():
         name = construct_filename(subdir, k, v)
         cap = v['cap']
@@ -2229,6 +2230,7 @@ class ProcOutput:
         self.max_time = max_time
         self.start_time = None
         self.inst = inst
+        self.proc = None  # type: Popen[bytes] | None
         self.running = False
         self.status = None
         self.timed_out = False
