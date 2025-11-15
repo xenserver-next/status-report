@@ -722,52 +722,65 @@ def collect_data(subdir, archive):
     # Afterwards, traverse the directory specifications for files to add
     traverse_directory_specifications(directory_specifications, entries)
 
+    collect_proc_files_and_func_outputs(subdir, archive)
+
+
+def collect_proc_files_and_func_outputs(subdir, archive):
+    """Collect all /proc and function outputs and add them to the output archive"""
     # Then, loop over the files which were found and collect their contents
     for k, v in data.items():
         if "cmd_args" in v:
             continue  # commands processing has been moved to a different loop
-        name = construct_filename(subdir, k, v)
-        cap = v["cap"]
-        filename = v.get("filename")
-        if filename and (filename.startswith("/proc/") or filename.startswith("/sys/")):
-            # proc files must be read into memory
-            try:
-                f = open(v["filename"], "rb")
-                s = f.read(unlimited_data and -1 or caps[cap][MAX_SIZE])
-                f.close()
-                if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
-                        cap_sizes[cap] < caps[cap][MAX_SIZE] or len(s) == 0:
-                    v['output'] = StringIOmtime(s)
-                    archive.add_path_with_data(name, v['output'])
-                    v['md5'] = md5sum(v)
-                    del v['output']
-                    cap_sizes[cap] += len(s)
-                else:
-                    log("Omitting %s, size constraint of %s exceeded" % (v['filename'], cap))
-            except IOError as e:
-                if e.errno != 2:
-                    log("IOError reading %s: %s" % (filename, e))
-        elif "func" in v:
-            try:
-                s = no_unicode(v["func"](cap))
-            except Exception:
-                backtrace = traceback.format_exc()  # type: str
-                log(backtrace)
-                s = backtrace.encode()
+        collect_proc_file_and_func_output(subdir, archive, k, v)
+
+
+def collect_proc_file_and_func_output(subdir, archive, k, v):
+    """Collect a /proc file or function output and add it to the output archive"""
+    name = construct_filename(subdir, k, v)
+    cap = v["cap"]
+    filename = v.get("filename")
+    if filename and (filename.startswith("/proc/") or filename.startswith("/sys/")):
+        # proc files must be read into memory
+        try:
+            f = open(v["filename"], "rb")
+            s = f.read(unlimited_data and -1 or caps[cap][MAX_SIZE])
+            f.close()
+
+            # If unlimited_data is set, or the file is smaller than the max_size,
+            # or the file is empty, include it in the archive:
             if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
-                    cap_sizes[cap] < caps[cap][MAX_SIZE]:
+                    cap_sizes[cap] < caps[cap][MAX_SIZE] or len(s) == 0:
                 v['output'] = StringIOmtime(s)
                 archive.add_path_with_data(name, v['output'])
                 v['md5'] = md5sum(v)
                 del v['output']
                 cap_sizes[cap] += len(s)
             else:
-                log("Omitting %s, size constraint of %s exceeded" % (k, cap))
-        elif filename:
-            try:
-                archive.addRealFile(name, filename)
-            except:
-                pass
+                log("Omitting %s, size constraint of %s exceeded" % (v['filename'], cap))
+        except IOError as e:
+            if e.errno != 2:
+                log("IOError reading %s: %s" % (filename, e))
+    elif "func" in v:
+        try:
+            s = no_unicode(v["func"](cap))
+        except Exception:
+            backtrace = traceback.format_exc()  # type: str
+            log(backtrace)
+            s = backtrace.encode()
+        if unlimited_data or caps[cap][MAX_SIZE] == -1 or \
+                cap_sizes[cap] < caps[cap][MAX_SIZE]:
+            v['output'] = StringIOmtime(s)
+            archive.add_path_with_data(name, v['output'])
+            v['md5'] = md5sum(v)
+            del v['output']
+            cap_sizes[cap] += len(s)
+        else:
+            log("Omitting %s, size constraint of %s exceeded" % (k, cap))
+    elif filename:
+        try:
+            archive.addRealFile(name, filename)
+        except:
+            pass
 
 
 def usage():

@@ -200,8 +200,7 @@ repos:
         additional_dependencies: [defusedxml, pytest, lxml, mock, XenAPI]
 
 
--   repo: https://github.com/mattseymour/pre-commit-pytype
-    rev: '2023.5.8'
+-   repo: local
     hooks:
     -   id: pytype
         # Note: Pytype does not support Python 3.12 yet:
@@ -211,6 +210,9 @@ repos:
         # you need to uncomment the next line to run pytype in a Python3.10 environment:
         # that also the GitHub Action currently uses:
         # language_version: "3.10"
-        name: Run pytype to check the unit tests for any typing warnings (does not work on bugtool yet)
-        exclude: xen-bugtool
-        additional_dependencies: [pytest]
+        name: pytype static type analyzer
+        language: python
+        entry: pytype
+        args: ["--config=pytype.cfg"]
+        require_serial: true  # More efficient when only one checker is started
+        additional_dependencies: [pytest, pytype == 2024.10.11]

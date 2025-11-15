@@ -124,14 +124,14 @@ coverage:
         flags: ["python2.7"]
       tool-py3:  # declare a new status context "tool-py3"
         paths: ["xen-bugtool"]
-        flags: ["python3.10"]
+        flags: ["python3.11"]
 
       tests-py2:
         paths: ["tests/**/test_*.py"]
         flags: ["python2.7"]
       tests-py3:
         paths: ["tests/**/test_*.py"]
-        flags: ["python3.10"]
+        flags: ["python3.11"]
 
     #
     # Patch limits
@@ -156,11 +156,11 @@ coverage:
         flags: ["python2.7"]
       script-py3:
         paths: ["xen-bugtool"]
-        flags: ["python3.10"]
+        flags: ["python3.11"]
 
       tests-py2:
         paths: ["tests/**/test_*.py"]
         flags: ["python2.7"]
       tests-py3:
         paths: ["tests/**/test_*.py"]
-        flags: ["python3.10"]
+        flags: ["python3.11"]
