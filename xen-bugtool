@@ -566,6 +566,19 @@ def output(x):
 def output_ts(x):
     output("[%s]  %s" % (time.strftime("%x %X %Z"), x))
 
+def is_executable(cmd):
+    """Check if the command in args exists (absolute or in path)"""
+    if isinstance(cmd, str):
+        cmd = cmd.split()  # Split the string into a list
+    if cmd[0].startswith("/"):
+        if os.path.exists(cmd[0]) and os.access(cmd[0], os.X_OK):
+            return True
+    for path in os.environ["PATH"].split(os.pathsep):
+        probe = os.path.join(path, cmd[0])
+        if os.path.exists(probe) and os.access(probe, os.X_OK):
+            return True
+    return False
+
 def cmd_output(cap, args, label = None, filter = None):
     if cap in entries:
         if not label:
@@ -575,7 +588,8 @@ def cmd_output(cap, args, label = None, filter = None):
                 label = ' '.join(a)
             else:
                 label = args
-        data[label] = {'cap': cap, 'cmd_args': args, 'filter': filter}
+        if is_executable(args):
+            data[label] = {'cap': cap, 'cmd_args': args, 'filter': filter}
 
 def dir_list(cap, path_list, recursive = False):
     flags = '-l'
