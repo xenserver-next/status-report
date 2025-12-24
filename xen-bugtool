@@ -567,13 +567,14 @@ def output_ts(x):
     output("[%s]  %s" % (time.strftime("%x %X %Z"), x))
 
 def cmd_output(cap, args, label = None, filter = None):
+    """If the cap shall be collected, add the specification to run the command"""
     if cap in entries:
-        if not label:
+        if not label:  # The default label not set, generate the label from the command
             if isinstance(args, list):
-                a = [aa for aa in args]
-                a[0] = os.path.basename(a[0])
-                label = ' '.join(a)
-            else:
+                a = list(args)  # Copy it, and in the copy, use only
+                a[0] = os.path.basename(a[0])  # the basename of the command
+                label = ' '.join(a)  # (and then its args) for a shorter label
+            else:  # The command is a non-empty string, fall back to use it as label
                 label = args
         data[label] = {'cap': cap, 'cmd_args': args, 'filter': filter}
 
@@ -1775,6 +1776,11 @@ def fd_usage(cap):
     return output
 
 def load_plugins(just_capabilities = False):
+    """
+    Load plugins from PLUGIN_DIR.
+    If `just_capabilities` is True, only load the capabilities of the plugins.
+    See doc/plugins.md for details on the plugin XML formats.
+    """
     def getText(nodelist):
         rc = ""
         for node in nodelist:
@@ -1833,13 +1839,12 @@ def load_plugins(just_capabilities = False):
                     recursive = getBoolAttr(el, 'recursive')
                     dir_list(dir, getText(el.childNodes).split(), recursive)
                 elif el.tagName == "directory":
-                    pattern = el.getAttribute("pattern")
-                    if pattern == '': pattern = None
+                    # The xml is trusted, so is the regex, no need to catch re.error
+                    pattern = re.compile(el.getAttribute("pattern"))
                     negate = getBoolAttr(el, 'negate')
-                    tree_output(dir, getText(el.childNodes), pattern and re.compile(pattern) or None, negate)
+                    tree_output(dir, getText(el.childNodes), pattern, negate)
                 elif el.tagName == "command":
                     label = el.getAttribute("label")
-                    if label == '': label = None
                     cmd_output(dir, getText(el.childNodes), label)
 
 def removeNoError(filename):

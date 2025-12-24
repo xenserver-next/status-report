@@ -145,6 +145,7 @@ LVDISPLAY
 lwidentity
 maxsplit
 mcelog
+md
 mdadm
 mdstat
 Misha
