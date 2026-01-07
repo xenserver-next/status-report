@@ -289,16 +289,29 @@ def patched_bugtool(bugtool, mocker, dom0_template, tmp_path):
     """PyTest fixture providing a patched bugtool module with mocks and
     configurations to execute its main() from a unprivileged unit test process
     on a regular Linux host, with test data from the framework's dom0 template.
+    This fixture is function-scoped to avoid interference between test cases.
 
     :param bugtool: The imported bugtool module object to be patched.
     :param mocker: The mocker object for mocking functions and attributes.
     :param dom0_template: The path to the dom0 template directory.
     :param tmp_path: The temporary path for storing files.
     """
+
+    saved_db_conf = bugtool.DB_CONF  # Save the original DB_CONF to restore later
+
+    # Patch the bugtool module to be able to run its main() function as non-root
+    # user on a regular Linux host, using the dom0 template as source of files:
     patch_bugtool(bugtool, mocker, dom0_template, "main_mocked", tmp_path)
 
-    base_path = tmp_path / os.environ["XENRT_BUGTOOL_BASENAME"]
-    return bugtool, base_path.as_posix(), tmp_path.as_posix()
+    # For asserting the contents of the bugtool archive, its directory is needed:
+    archive_dir = tmp_path / os.environ["XENRT_BUGTOOL_BASENAME"]
+
+    # Yield to run the test case: Provide the patched bugtool module, the new
+    # function-scoped tmp path and the archive directory in it to the test case:
+    yield bugtool, archive_dir.as_posix(), tmp_path.as_posix()
+
+    # The test case is done (executed by yield). Restore the original DB_CONF:
+    bugtool.DB_CONF = saved_db_conf
 
 
 def test_main_func_output_to_zipfile(patched_bugtool, capfd):
