@@ -32,6 +32,22 @@
 # or func_output().
 #
 
+# Documentation on the Python type comments used in this project:
+#
+# The type comments use the syntax of PEP 484, PEP 526, and PEP 544.
+# For development, python 3.10+ is required and type comments are used
+# in order to not break compatibility with older Python versions. At runtime,
+# the type comments are ignored, so the code can still run on Python 2.7+,
+# although "Yangtze" has its own release branch now, so Python 2.7 support
+# can be dropped in future if we change the shebang to python3 to execute
+# xen-bugtool with Python 3 on XS 8.4 as well.
+# XS 8.4 is only compatible with Python 3.6, so while it supports type comments,
+# it only supports a subset of the latest type comment syntax.
+# Thus, type comments will still be used instead of inline type annotations.
+# This has the advantage that the type comments can use the latest syntax
+# and features, e.g. "str | None" instead of "Optional[str]" that would
+# require Python 3.10+ at runtime.
+
 # Special pylint disables for latest pylint on xen-bugtool itself (for the moment):
 # pylint: disable=missing-docstring,line-too-long,multiple-statements,unnecessary-pass
 # pylint: disable=broad-exception-raised,missing-type-doc,useless-object-inheritance
@@ -556,8 +572,68 @@ def output(x):
 def output_ts(x):
     output("[%s]  %s" % (time.strftime("%x %X %Z"), x))
 
+def is_deemed_executable(command):
+    # type: (str | list[str]) -> bool
+    """Check if command is executable (supports absolute paths and it looks in $PATH)
+    :param command: The command to check, either a string or a list of strings.
+
+    Note: This function is also called from load_plugins(), feeding it a string
+    that contains arbitrary commands, shell builtins and even loops. An example
+    is `ls -lR /lib/modules/$(uname -r)/updates`. Such strings are not
+    validated here, and are only checked for being non-empty.
+    """
+
+    def path_is_absolute(cmd_path):  # type: (str) -> bool
+        """Check if cmd_path is an absolute path"""
+        return cmd_path.startswith("/")
+
+    def path_is_executable(cmd_path):  # type: (str) -> bool
+        """Check if cmd_path is an executable file"""
+        # isfile() follows symlinks, so this works for symlinked commands as well
+        return os.path.isfile(cmd_path) and os.access(cmd_path, os.X_OK)
+
+    if not isinstance(command, list):
+        # We have a string, command is the string command or script to check
+        if path_is_absolute(command):
+            # plugin script starts with an absolute path, return its executable state
+            return path_is_executable(command.split()[0])
+
+        # We cannot validate other strings, so check those just for non-emptiness:
+        # The load_plugins() function calls this function with arbitrary strings
+        # that may contain shell builtins, loops, etc. We cannot validate those,
+        # so we just check that the string is not empty or only whitespace.
+        return bool(command and command.strip())
+
+    # We have a list of command arguments, command[0] is the command to check
+    if path_is_absolute(command[0]):
+        return path_is_executable(command[0])
+
+    # command[0] was not an absolute path, look for the command in $PATH
+    for path_part in os.environ.get("PATH", "").split(":"):
+        # For xen-bugtool we only accept absolute paths here as we don't want
+        # to execute anything from the current directory (".") or relative paths
+        # in $PATH: This would pose a risk to the predictability of the command.
+        if path_is_absolute(path_part):
+            if path_is_executable(os.path.join(path_part, command[0])):
+                return True
+    return False
+
 def cmd_output(cap, args, label = None, filter = None):
+    # type: (str, str | list[str], str | None, str | None) -> None
+    """Add a command output to the data dictionary to be collected
+    :param cap: The capability for which the command shall be executed.
+    :param args: The shell commands to run, either a string or a list of strings.
+    :param label: An optional label for the command output.
+    :param filter: An optional filter function to apply to the command output.
+
+    Note: This function is also called from load_plugins() which feeds it a string
+    that contains arbitrary commands, shell builtins and even for loops for /bin/sh.
+    """
     if cap in entries:
+        if not is_deemed_executable(args):
+            cmd = args if isinstance(args, str) else " ".join(args)
+            log(f"Command for cap {cap} not found: {cmd}", print_output=False)
+            return
         if not label:
             if isinstance(args, list):
                 a = [aa for aa in args]

@@ -244,10 +244,18 @@ def assert_bugtool_logfile_data(logfile):
     # caught and logged, the log file should contain the backtrace from the
     # raised exception:
     #
-    if sys.version_info >= (3, 11):  # pragma: no cover
-        assert len(lines) == 10  # Python 3.11+ includes a new line in the backtrace
+    if sys.version_info >= (3, 11):
+        assert len(lines) == 11
     else:
-        assert len(lines) == 9
+        assert len(lines) == 10  # pragma: no cover (py3.10 and below)
+
+    nonexisting_commands_in_testenv = {
+        "xenserver-databases": "xe pool-dump-database file-name=",
+    }
+    for cap, command in nonexisting_commands_in_testenv.items():
+        assert f"Command for cap {cap} not found: {command}\n" in log
+
+    # Check that all expected lines (also the backtrace) are in the log file:
     for backtrace_string in MOCK_EXCEPTION_STRINGS:
         assert backtrace_string in log
 

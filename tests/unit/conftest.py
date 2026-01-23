@@ -176,3 +176,22 @@ def isolated_bugtool(bugtool_log):
     os.chmod(".", 0o777)  # nosec # restore write permissions (for cleanup)
 
     # upon return, bugtool_log continues with its cleanup
+
+
+@pytest.fixture(scope="function")
+def bugtool_fixture(isolated_bugtool):
+    """
+    Fixture that wraps isolated_bugtool and restores its state after each test.
+    """
+
+    # Assert that isolated_bugtool is pristine and we have a clean state to start:
+    assert isolated_bugtool.data == {}
+    assert isolated_bugtool.entries is None
+
+    yield isolated_bugtool  # runs the test case in the read-only directory
+
+    # Restore isolated_bugtool to its pristine state:
+    isolated_bugtool.data = {}
+    isolated_bugtool.entries = None
+
+    # upon return, isolated_bugtool continues with its cleanup
