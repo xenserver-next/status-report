@@ -5,6 +5,7 @@ This is the process of manually tagging a new version that was merged to master.
 There are bump tools which help to automate this process, but they are not added yet.
 
 First switch to the master branch and pull the latest merge.
+
 ```bash
 $ git switch master
 $ git pull origin
@@ -18,20 +19,26 @@ Date:   Thu Feb 22 15:49:23 2024 +0100
 
     CA-389135: Fix the off-by-default and hidden direct-fetched VM RRDs
 ```
+
 Ensure that your commit hash is identical with the latest commit on master
 shown in the GitHub web repository.
 
 Get the latest tag:
+
 ```bash
 $ git tag | sort -n | tail -n1
 v2.0.1
 ```
+
 Tag a new version using an annotated tag (one which is recorded like a git commit):
+
 ```bash
 $ git_tag=v2.0.2
 $ git tag -m "Tag $git_tag" $git_tag
 ```
+
 Confirm that the tag was created on the correct commit:
+
 ```bash
 $ git show $git_tag|head -15
 tag v2.0.2
@@ -50,18 +57,19 @@ Date:   Thu Feb 22 15:49:23 2024 +0100
     CA-389135: Fix the off-by-default and hidden direct-fetched VM RRDs
 $ git push --tags
 ```
-Then wait for some time for the new update to be synced to the mirror repo.
 
+Then wait for some time for the new update to be synced to the mirror repo.
 
 ## Creating a new release
 
 After tagging a new version, it would also be good for review to create
 a new release:
-- With it, you can generate and edit the release notes based on the commits
-in it.
+
+- With it, you can generate and edit the release notes based on the commits in it.
 - Reviewers can get a better picture of the changes in the release using the release notes.
 
-Navigate to https://github.com/xenserver/status-report/tags:
+Navigate to <https://github.com/xenserver/status-report/tags>:
+
 - Visit the new tag:
   https://github.com/xenserver/status-report/releases/tag/v2.0.2
 - Click the button “Create release from tag”

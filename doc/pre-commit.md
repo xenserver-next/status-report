@@ -1,3 +1,5 @@
+# Running checks using pre-commit
+
 ## Running CI checks locally (and in GitHub CI) using `pre-commit`
 
 This project uses `pre-commit` to run the tests in a defined, clean environment:
@@ -6,10 +8,14 @@ This project uses `pre-commit` to run the tests in a defined, clean environment:
 - It runs `pytest` with coverage and checks the coverage on the changed lines
 - It runs `pylint`, `mypy`, `pyright` and `pytype`:
 
+The pre-commit configuration defines how it runs
+`pytest`, `pylint` and static analysis using `mypy`, `pyright`, and `pytype`.
+
 Links:
-- https://mypy.readthedocs.io/en/stable/
-- https://microsoft.github.io/pyright/
-- https://google.github.io/pytype/user_guide.html
+
+- <https://mypy.readthedocs.io/en/stable/>
+- <https://microsoft.github.io/pyright/>
+- <https://google.github.io/pytype/user_guide.html>
 
 - Because this project is now using Python3.6+, type annotations (PEP 484)
   no longer need to be in comments, but can be in the code directly.
@@ -27,17 +33,19 @@ uv pip install pre-commit
 . .venv/bin/activate  # (if using a virtualenv)
 pre-commit run -av
 ```
+
 Without -a, it would only run hooks for staged files with changes.
 With `-a`, `pre-commit run -a` runs all fixes and checks.
 
 You can skip checks if you commit by passing `SKIP=` in the environment:
+
 ```py
 export SKIP=mypy,pylint;git commit -m "quick save"  # (or for --amend)
 ```
 
 Only the 1st invocation of pre-commit will be slow as it creates `virtualenv`s
 for each sub-hook configured in its configuration file
-[.pre-commit-config.yaml](.pre-commit-config.yaml). Subsequent runs are fast.
+[`.pre-commit-config.yaml`](.pre-commit-config.yaml). Subsequent runs are fast.
 
 If a formatting hook like trailing-whitespace fails, just run `git add -p` to
 stage the whitespace fixes into the index and run pre-commit again.
@@ -47,9 +55,12 @@ When you are ready to use pre-commit as a pre-commit hook in this clone,
 run this command to install it. Until uninstalled from this repo, it will
 then run on each commit. This is completely optional and just a matter of
 preference:
+
 ```bash
 pre-commit install
 ```
+
+## Videos about pre-commit
 
 ### The easy way to keep your repos tidy (5 minutes)
 [![The easy way to keep your repos tidy.](https://img.youtube.com/vi/psjz6rwzMdk/0.jpg)](https://www.youtube.com/watch?v=psjz6rwzMdk)
@@ -83,17 +94,19 @@ new commit in the stack work for itself, you can use a git alias:
 [alias]
     prebase = rebase -x 'pre-commit run --from-ref HEAD~ --to-ref HEAD'
 ```
+
 When using `git prebase -i` instead of `git rebase -i`, pre-commit will
 run the configured commit hooks for each commit of the rebase.
 
 This ensures that tests also pass on each intermediate commit.
 
 When, during a `git prebase -i`, a pre-commit hook fails or makes changes,
-the `rebase` stops, this is the workflow:
-- You'll see the reason of the error and get a shell.
-- You can then can check `git diff`, in case formatters fixed up the code.
-- You can then fix any errors and stage them
-- Then, run `git rebase --continue` to continue the rebase to the next step.
+the `rebase` stops. These are the steps to fix such failed rebase:
 
-A very helpful explanation by the Author of a book on git is here:
-https://adamj.eu/tech/2022/11/07/pre-commit-run-hooks-rebase/
+- Review which errors were raised by the `pre-commit` hooks.
+- In case formatters fixed the causes already, check `git diff`.
+- Fix the errors and stage the fixes using `git add <file>`.
+- Run `git rebase --continue` to try to continue the rebase to the next step.
+
+A very helpful explanation by the author of a book on git is here:
+<https://adamj.eu/tech/2022/11/07/pre-commit-run-hooks-rebase/>

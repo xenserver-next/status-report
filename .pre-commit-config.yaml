@@ -191,6 +191,14 @@ repos:
         additional_dependencies: [coverage]
 
 
+-    repo: https://github.com/igorshubovych/markdownlint-cli
+     rev: v0.45.0
+     hooks:
+     -  id: markdownlint
+        # The updated fixes for conftest-README.md are in PR #169
+        exclude: tests/unit/conftest-README.md
+
+
 -   repo: https://github.com/RobertCraigie/pyright-python
     rev: v1.1.408
     hooks:

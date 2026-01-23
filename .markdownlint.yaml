@@ -1,0 +1,47 @@
+# MD001/heading-increment:
+# Heading levels do not need to increment by one level at a time
+MD001: false
+
+# MD012/no-multiple-blanks:
+# Two consecutive blank lines are allowed
+MD012:
+  maximum: 2
+
+# MD013/line-length:
+# Set line length to 150 characters for now, until README.md is restructured
+MD013:
+   line_length: 100
+   code_block_line_length: 88
+
+# MD014/commands-show-output:
+# Dollar signs used before commands without showing output are permitted
+MD014: false
+
+# MD022/blanks-around-headings:
+# Headings do not need to be surrounded by blank lines for now
+MD022:
+  lines_above: 0
+  lines_below: 0
+
+# MD026/no-trailing-punctuation:
+# Some trailing punctuation in heading is allowed for now, most not.
+MD026:
+  # Punctuation characters
+  punctuation: ",;!。，；：！"
+
+# MD032/blanks-around-lists:
+# Lists do not need to be surrounded by blank lines for now
+MD032: false
+
+# MD033/no-inline-html:
+# Allow certain inline HTML elements
+MD033:
+  allowed_elements: [img, kbd]
+
+# MD034/no-bare-urls:
+# Bare URLs are allowed for now
+MD034: false
+
+# MD045/no-alt-text:
+# Images without alt text are allowed for now
+MD045: false
