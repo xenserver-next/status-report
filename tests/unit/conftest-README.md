@@ -1,11 +1,19 @@
-# tests/unit/conftest-README:
+# Documentation of `tests/unit/conftest.py`
 
-This [README](../../README.md) documents the
-[pytest](https://docs.pytest.org/en/4.6.x/contents.html)
-[`conftest.py`](https://docs.pytest.org/en/4.6.x/pythonpath.html?highlight=conftest.py#test-modules-conftest-py-files-inside-packages)
-file [`tests/unit/conftest.py`](conftest.py).
+## Overview
+
+`conftest.py` is a special file used by the `pytest` framework.
+It is a local plugin for your tests, where you can define fixtures, hooks,
+and other configuration for your tests.
+
+`pytest` automatically discovers `conftest.py`, and makes
+the fixtures in it available to all tests in its directory.
+
+This is described in the `pytest` documentation:
+<https://docs.pytest.org/en/stable/reference/fixtures.html#conftest-py-sharing-fixtures-across-multiple-files>
 
 The tests in [`tests/unit/`](.) use it for three classes of tests:
+
 - [Unit-testing](https://en.wikipedia.org/wiki/Unit_testing) of single functions
 - [Functional testing](https://en.wikipedia.org/wiki/Functional_testing)
   of a chain of functions, testing their in- and output
@@ -13,28 +21,16 @@ The tests in [`tests/unit/`](.) use it for three classes of tests:
   of `xen-bugtool` the main code of [`xen-bugtool`](../../xen-bugtool)
   - by calling its function `main()` in [`tests/unit/test_main.py`](test_main.py)
 
-It contains several [pytest](https://docs.pytest.org/en/4.6.x/contents.html)
-fixtures which are described below.
-
-
-## Overview
-
-`conftest.py` is a special file used by the pytest framework.
-It is a local plugin for your tests, where you can define fixtures, hooks,
-and other configuration for your tests.
-
-`pytest` automatically discovers `conftest.py`, and makes
-the fixtures in it available to all tests in its directory.
-
-## Fixtures
+## Fixtures provided by `tests/unit/conftest.py`
 
 Fixtures are functions that set up and tear down test environments.
 They are decorated with `@pytest.fixture`.
 Fixtures defined in `conftest.py` are available to all test files
 in the same directory and subdirectories.
 
-Links to the [pytest](https://docs.pytest.org/en/8.0.x/how-to/index.html#how-to)
+Links to the [`pytest`](https://docs.pytest.org/en/8.0.x/how-to/index.html#how-to)
 documentation pages about fixtures:
+
 - [An introduction to fixtures](https://docs.pytest.org/en/8.0.x/fixture.html):
   Quick intro into the topic of fixtures
 - [How to use fixtures](https://docs.pytest.org/en/8.0.x/how-to/fixtures.html):
@@ -44,6 +40,7 @@ documentation pages about fixtures:
 
 These are the fixtures defined in [`tests/unit/conftest.py`](conftest.py),
 their name and purpose is:
+
 - `builtins`: Provide the name of the built-in module for Python 2.x and Python 3.x
 - `testdir`: Provide the directory of the unit test for locating files relative to it.
 - `dom0_template`: Provide the directory of the dom0 template.
@@ -62,10 +59,12 @@ their name and purpose is:
 ## Fixtures
 
 ### `builtins`
-- **Purpose**: Provide the `builtins` module for __Python 2.x__ *and*
-  __Python 3.x__
+
+- **Purpose**: Provide the `builtins` module for *Python 2.x* and
+  *Python 3.x*
 
 - **Example**:
+
     ```python
     def test_example(builtins, mocker):
         # `builtins` provides the builtins module for Python 2 and Python 3:
@@ -73,18 +72,22 @@ their name and purpose is:
     ```
 
 ### `testdir`
+
 - **Purpose**: Provide the directory of the main [tests/](..) directory
 - **Example**:
+
     ```python
     @pytest.fixture
     def dom0_template(testdir):
         # relative to testdir, provide the dom0-template directory
-        return  testdir + "/../integration/dom0-template
-        ```
+        return testdir + "/../integration/dom0-template"
+    ```
 
 ### `dom0_template`
+
 - **Purpose**: Provide the directory of the dom0 template directory
 - **Example**:
+
     ```python
     def test_example(bugtool, dom0_template):
         # Provide fixtures and test cases with access to example files.
@@ -94,11 +97,13 @@ their name and purpose is:
     ```
 
 ### `imported_bugtool`
+
 - **Purpose**: Import the `xen-bugtool` script as a module for
                executing unit tests on functions.
-- **Scope**: The entire pytest session, it only runs once.
+- **Scope**: The entire `pytest` session, it only runs once.
 - **Use case**: Only for other fixtures that prepare it for tests.
 - **Example use**:
+
     ```python
     @pytest.fixture(scope="function")
     def bugtool(imported_bugtool):
@@ -113,8 +118,10 @@ their name and purpose is:
     ```
 
 ### `bugtool`
-- **Purpose**: Initialize the bugtool data dict for each test.
+
+- **Purpose**: Initialize the data dictionary for each test.
 - **Example**:
+
     ```python
     def test_example(bugtool):
         # Test specific functionalities of the bugtool using initialized data
@@ -122,10 +129,11 @@ their name and purpose is:
     ```
 
 ### `in_tmpdir`
+
 - **Purposes**:
-    - Provide a pytest
-    [`tmpdir`](https://docs.pytest.org/en/6.2.x/tmpdir.html#the-tmpdir-fixture)
-      fixture.
+
+  - Provide the [`tmpdir`](https://docs.pytest.org/en/6.2.x/tmpdir.html#the-tmpdir-fixture)
+    fixture.
     - `cd` into it before yielding control switch back afterwards.
     - Offer the [`py.path.local`](https://py.readthedocs.io/en/latest/path.htm)
       object which provides
@@ -133,13 +141,15 @@ their name and purpose is:
       - See the **Example 2** below on how to use it.
 
 - **Examples**:
+
     ```python
     # Example 1: Test requests the fixture using a decorator:
     @pytest.usefixtures("in_tmpdir")
     def test_runs_in_tmpdir(bugtool):
         assert bugtool.function_creating_files_in_the_cwd()
-        # restore & cleanup is taken care of by the fixures.
+        # restore & cleanup is taken care of by the fixtures.
     ```
+
     ```python
     # Example 2: Get fixture as argument of type py.path.local:
     def test_prepares_tmpdir_for_testing(in_tmpdir, bugtool):
@@ -150,10 +160,12 @@ their name and purpose is:
     ```
 
 ### `bugtool_log`
+
 - **Purpose**: Like `in_tmpdir` and provide the bugtool fixture.
 
   It adds checking the file located at `bugtool.XEN_BUGTOOL_LOG` for output.
 - **Example**:
+
     ```python
     def test_not_generating_unexpected_logs(bugtool_log):
         # This fixture fails this test and shows "message"
@@ -162,20 +174,21 @@ their name and purpose is:
     ```
 
 ### `isolated_bugtool`
-- **Purpose**: Like `bugtool_log` and make the working
- directory read-only.
+
+- **Purpose**: Like `bugtool_log` and make the working directory read-only.
 - **Example**:
+
     ```python
     def test_cannot_write_to_its_current_directory(isolated_bugtool):
         # The code under test can't write its working directory:
         open("file", "w")  # will raise an Exception
     ```
 
-
 ## Further Reading
 
-Links to the [pytest](https://docs.pytest.org/en/8.0.x/how-to/index.html#how-to)
-documentation pages about fixtures:
+Links to the [documentation](https://docs.pytest.org/en/8.0.x/how-to/index.html#how-to)
+pages about fixtures:
+
 - [An introduction to fixtures](https://docs.pytest.org/en/8.0.x/fixture.html):
   Quick intro into the topic of fixtures
 - [How to use fixtures](https://docs.pytest.org/en/8.0.x/how-to/fixtures.html):
