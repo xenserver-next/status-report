@@ -4,6 +4,7 @@ import sys
 from xml.dom.minidom import parseString
 from xml.etree.ElementTree import fromstring
 
+import pytest
 
 testdir = os.path.dirname(__file__)
 original = r"""<?xml version="1.0" ?>
@@ -93,3 +94,53 @@ def test_filter_xenstore_secrets(bugtool):
     """Assert that filter_xenstore_secrets() does not filter non-secrets"""
 
     assert bugtool.filter_xenstore_secrets(b"not secret", "_") == b"not secret"
+
+
+def test_dump_filtered_xapi_db(bugtool, fs):
+    """
+    Assert that bugtool.dump_filtered_xapi_db() filters the XAPI DB as expected
+    using a fake filesystem (pyfakefs) to avoid touching the real filesystem
+    and without requiring root privileges.
+    """
+
+    # Prepare the test using the fs fixture of pyfakefs:
+    fs.create_file(bugtool.DB_CONF, contents="[/xapi.db]\n")
+    fs.create_file("/xapi.db", contents=original)
+
+    # Act:
+    filtered = bugtool.dump_filtered_xapi_db("mock")
+
+    # Assert:
+    assert_xml_str_equiv(filtered, expected)
+
+
+def test_xapi_db_no_conf(bugtool):
+    """Test bugtool.dump_filtered_xapi_db() when the DB_CONF file is missing"""
+
+    # Prepare: Ensure the DB_CONF file does not exist:
+    saved_conf = bugtool.DB_CONF
+    bugtool.DB_CONF = "/non/existent/file"
+
+    # Act:
+    with pytest.raises(IOError) as exc_info:
+        bugtool.dump_filtered_xapi_db("mock")
+
+    # Assert (bugtool catches it and logs it, tested in another test):
+    assert "No such file or directory" in str(exc_info.value)
+    assert str(exc_info.value).endswith(bugtool.DB_CONF + "'")
+
+    # Cleanup:
+    bugtool.DB_CONF = saved_conf
+
+
+def test_xapi_db_no_db_file(bugtool, fs):
+    """Test bugtool.dump_filtered_xapi_db() when the xapi db file is missing"""
+
+    # Prepare the test using the fs fixture of pyfakefs:
+    fs.create_file(bugtool.DB_CONF, contents="[/nonexistent-xapi.db]\n")
+
+    # Act:
+    data = bugtool.dump_filtered_xapi_db("mock")
+
+    # Assert: No data returned
+    assert data == ""
