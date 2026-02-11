@@ -1,4 +1,4 @@
-## Local Python Development setup on Ubuntu 20.04 / 22.04
+# Local Python Development setup on Ubuntu 20.04 / 22.04
 
 For running the Unit tests and static analysis tools, use a relatively modern
 Linux VM. Possible are Fedora37+, but the documentation here focuses on
@@ -7,6 +7,7 @@ Ubuntu20.04 and 22.04 as they are the defaults of WSL and hosts:
 ```bash
 sudo apt update;sudo apt install software-properties-common python{2,3}
 ```
+
 Ubuntu no longer packages `python2-pip`, so you have to install `pip2`
 [this way](https://askubuntu.com/questions/1317353/how-can-i-find-an-older-version-of-pip-that-works-with-python-2-7):
 
@@ -21,7 +22,8 @@ echo 'PATH="~/.local/bin/pip:$PATH"' >>~/.bash_aliases
 . ~/.bash_aliases
 ```
 
-You can install specific Python verisons using this PPA:
+You can install specific Python versions using this PPA:
+
 ```bash
 sudo add-apt-repository -y ppa:deadsnakes/ppa
 sudo apt-get install -y python3.{8,11}{,-distutils}

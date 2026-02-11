@@ -1,5 +1,5 @@
 
-## Recommendations for local Development on Windows and WSL2
+# Recommendations for local Development on Windows and WSL2
 
 ### Using Docker on WSL2/22.04
 

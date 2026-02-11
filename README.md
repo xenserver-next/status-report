@@ -9,14 +9,29 @@ the development environment for `xen-bugtool`,
 a tool designed to assist with debugging XenServer issues.
 
 For more information, see these README files:
+
+Development practices and guidelines:
+- [doc/development.md](doc/development.md): Development guidelines and best practices
+- [doc/release.md](doc/release.md): Instructions for creating a new release
+
+Setting up the development environment:
 - [README-python-install.md](README-python-install.md) - Preparing your
   Development VM for running the test suite
-- [README-pytest.md](README-pytest.md) - Introduction on the recommended pytest suite for unit tests
-- [README-pytest-chroot.md](README-pytest-chroot.md) - Introduction on the `pytest-chroot` test suite
 - [README-Windows-WSL2.md](README-Windows-WSL2.md) - Windows and WSL2 setup tips
-- [doc/pre-commit.md](doc/pre-commmit.md):
-  Using `pre-commit` to run the test and static analysis checks locally
+
+Automated tests:
+- [doc/testing.md](doc/testing.md): Overview of the different types of tests
+- [doc/pre-commit.md](doc/pre-commit.md):
+  Using `pre-commit` to run tests and static analysis checks locally
 - [doc/coverage.md](doc/coverage.md): Introduction on **coverage** from `pytest`
+
+Documentation on pytest and its fixtures:
+- [README-pytest.md](README-pytest.md):
+  Introduction on the recommended pytest suite for unit tests
+- [README-pytest-chroot.md](README-pytest-chroot.md):
+  Introduction on the `pytest`-based integration test suite using namespaces
+- [tests/unit/conftest-README.md](tests/unit/conftest-README.md):
+  Introduction on the `pytest` fixtures defined in `tests/unit/conftest.py`
 
 ## Frequently asked Questions
 
@@ -71,7 +86,8 @@ or 15). Beyond these values, functions tend to be difficult to test and maintain
 and are thus good candidates for a redesign or refactoring.
 
 You should keep in mind that both metrics are independent of the number of lines
-of code in your function. If you have 100 consecutive statements with no branches (conditions, loops, etc.), you'll get a value of 1 for both of them.
+of code in your function. If you have 100 consecutive statements with no branches
+(conditions, loops, etc.), you'll get a value of 1 for both of them.
 
 #### Blind spots of complexity metrics
 ##### Consistent and easy to read Code style and formatting rules
@@ -105,48 +121,6 @@ pip install radon
 # Clone python-libs, and host-installer copy perfmon from xen-api, then run:
 radon cc xen-bugtool host-installer/ perfmon xcp --total-average -nd --md
 ```
-##### Output:
-
-| Filename | Name | Type | Start:End Line | Complexity | Classification |
-| -------- | ---- | ---- | -------------- | ---------- | -------------- |
-| xen-bugtool | main | F | 777:1359 | 84 | F |
-| xen-bugtool | load_plugins | F | 1761:1827 | 27 | D |
-| xen-bugtool | collect_data | F | 701:758 | 21 | D |
-| host-installer/install.py | go | F | 89:325 | 60 | F |
-| host-installer/backend.py | performInstallation | F | 293:446 | 31 | E |
-| host-installer/backend.py | partitionTargetDisk | F | 525:587 | 21 | D |
-| host-installer/disktools.py | DOSPartitionTool.writeThisPartitionTable | M | 839:912 | 23 | D |
-| host-installer/restore.py | restoreFromBackup | F | 17:177 | 33 | E |
-| host-installer/product.py | ExistingInstallation._readSettings | M | 101:412 | 75 | F |
-| host-installer/diskutil.py | probeDisk | F | 467:530 | 21 | D |
-| host-installer/init | main | F | 92:247 | 35 | E |
-| host-installer/init | configureNetworking | F | 28:85 | 24 | D |
-| host-installer/tui/repo.py | confirm_load_repo | F | 207:283 | 21 | D |
-| host-installer/tui/network.py | get_iface_configuration | F | 15:134 | 29 | D |
-| host-installer/tui/installer/screens.py | get_name_service_configuration | F | 795:962 | 28 | D |
-| perfmon | main | F | 1307:1522 | 38 | E |
-| perfmon | VMMonitor.get_default_variable_config | M | 858:917 | 23 | D |
-| xcp/cpiofile.py | CpioFile.open | M | 1003:1083 | 22 | D |
-| xcp/bootloader.py | Bootloader.readExtLinux | M | 110:194 | 32 | E |
-| xcp/bootloader.py | Bootloader.readGrub | M | 197:301 | 28 | D |
-| xcp/bootloader.py | Bootloader.readGrub2 | M | 304:463 | 26 | D |
-| xcp/bootloader.py | Bootloader.writeGrub2 | M | 557:619 | 23 | D |
-| xcp/net/ifrename/dynamic.py | DynamicRules.generate | M | 147:227 | 23 | D |
-| xcp/net/ifrename/logic.py | rename_logic | F | 125:366 | 41 | F |
-| xcp/net/ifrename/logic.py | rename | F | 368:498 | 35 | E |
-| xcp/net/ifrename/static.py | StaticRules.load_and_parse | M | 103:210 | 25 | D |
-| xcp/net/ifrename/static.py | StaticRules.generate | M | 212:292 | 23 | D |
-
-#### Verdict
-
-As the five 5 conditions do not change the functionality of the main code paths,
-Python2 compatibility code does not change these complexity numbers.
-
-#### Summary on CC (Cyclomatic Complexity) results
-Only `host-installer/install.py/go()` (CC=60) comes close `bugtool/main()` (CC=84).
-
-The other projects are larger, when summarizing their CC into one number, this
-indicates that other projects need more tests.
 
 #### Conclusion
 
