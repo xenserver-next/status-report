@@ -110,12 +110,10 @@ coverage:
     project:
       default:
         #
-        # removed_code_behavior: Set it so that as long the patch is fully covered,
+        # removed_code_behavior: As long the patch is fully covered, pass:
+        # https://docs.codecov.com/docs/removed-code-behavior
         #
-        # https://about.codecov.io/blog/new-codecov-setting-removed-code-behavior/
-        # https://docs.codecov.com/docs/commit-status#removed_code_behavior
-        #
-        removed_code_behavior: adjust_base # off, removals_only, fully_covered_patch
+        removed_code_behavior: fully_covered_patch
 
       # The above defaults apply to each of these, unless overridden here:
       #
