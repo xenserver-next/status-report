@@ -8,7 +8,7 @@ from lxml.etree import XMLSchema, parse  # pytype: disable=import-error
 
 MOCK_EXCEPTION_STRINGS = (
     "Traceback (most recent call last):",
-    ", in collect_data",
+    ", in collect_file_data_or_function_output",
     ", in mock_data_collector",
     'raise Exception("mock data collector failed")',
     "Exception: mock data collector failed",
