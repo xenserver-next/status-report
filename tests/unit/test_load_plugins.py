@@ -46,7 +46,7 @@ def test_load_plugins(bugtool, dom0_template):
         },
         "proc_version": {
             "cap": "mock",
-            "cmd_args": "cat /proc/version",
+            "cmd_args": "/usr/sbin/cat /proc/version",
             "filter": None,
         },
     }
