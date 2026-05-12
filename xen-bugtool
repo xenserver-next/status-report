@@ -1406,7 +1406,7 @@ def dump_xapi_subprocess_info(cap):
        Returns a string containing a pretty-printed pstree-like structure. """
     all_pids = [proc_entry for proc_entry in os.listdir("/proc") if proc_entry.isdigit()]
     def readlines(filename):
-        lines = ''
+        lines = []
         try:
             f = open(filename, "r")
             lines = f.readlines()
